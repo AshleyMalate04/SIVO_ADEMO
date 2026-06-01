@@ -70,10 +70,12 @@ class UserController extends CrudController
         if ($userId) {
             $user = User::find($userId);
             if ($user) {
-                AccessNotificationService::notifyInitialAccess($user);
+                $emailSent = AccessNotificationService::notifyInitialAccess($user);
                 AuditService::record($request, 'CREDENCIAIS_INICIAIS_ENVIADAS', 'User', $user->id, [
-                    'email_sent' => (bool) $user->email,
+                    'email_sent' => $emailSent,
+                    'email_available' => (bool) $user->email,
                     'access_code' => $user->access_code,
+                    'role' => $user->role,
                 ]);
             }
         }

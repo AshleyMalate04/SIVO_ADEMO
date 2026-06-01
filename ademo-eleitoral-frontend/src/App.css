@@ -4150,7 +4150,9 @@ html[data-theme='dark'] .page-actions {
   color: #dc2626;
 }
 
-.form-field > span:not(.required-label)::after {
+.form-field:has(input[required]) > span:not(.required-label)::after,
+.form-field:has(select[required]) > span:not(.required-label)::after,
+.form-field:has(textarea[required]) > span:not(.required-label)::after {
   content: ' *';
   color: #dc2626;
 }

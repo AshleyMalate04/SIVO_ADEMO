@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -10,10 +11,10 @@ class AccessNotificationService
 {
     public const DEFAULT_PASSWORD = '12345678';
 
-    public static function notifyInitialAccess(User $user): void
+    public static function notifyInitialAccess(User $user): bool
     {
         if (! $user->email) {
-            return;
+            return false;
         }
 
         try {
@@ -23,8 +24,16 @@ class AccessNotificationService
                     ->to($user->email, $user->name)
                     ->subject('Dados de acesso à plataforma ADEMO Eleitoral');
             });
-        } catch (Throwable) {
-            // O envio de email não deve impedir o registo principal.
+
+            return true;
+        } catch (Throwable $exception) {
+            Log::warning('Falha ao enviar credenciais iniciais por email.', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return false;
         }
     }
 

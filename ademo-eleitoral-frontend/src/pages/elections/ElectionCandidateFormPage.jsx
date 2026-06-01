@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { FileText, Image, Upload } from 'lucide-react'
-import RequiredLabel from '../../components/common/RequiredLabel'
 import Loading from '../../components/common/Loading'
 import { candidateService } from '../../services/candidateService'
 import { electionService } from '../../services/electionService'
@@ -143,7 +142,7 @@ export default function ElectionCandidateFormPage() {
 
         <div className="upload-grid">
           <section className="upload-card">
-            <RequiredLabel>Foto</RequiredLabel>
+            <span>Foto (Opcional)</span>
             <div className="upload-dropzone">
               {photoPreview ? <img className="upload-preview" src={photoPreview} alt="Pré-visualização da fotografia" /> : <Image size={30} />}
               <p>{photoName || 'Upload da foto'}</p>

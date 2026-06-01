@@ -17,7 +17,7 @@ Depois altere obrigatoriamente:
 - `APP_URL`
 - `FRONTEND_URL`
 - `REVERB_APP_SECRET`
-- dados reais de email, se nao quiser usar `MAIL_MAILER=log`
+- dados reais de email SMTP em `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS` e `MAIL_FROM_NAME`
 
 Gere uma chave Laravel:
 
@@ -74,3 +74,4 @@ docker compose -f docker-compose.prod.yml exec backend php artisan optimize:clea
 - O ficheiro real `ademo-eleitoral-backend/.env.production` nao deve ir para o GitHub.
 - O ficheiro real `.env.production` tambem nao deve ir para o GitHub.
 - Para dominio real e HTTPS, ajuste `APP_URL`, `FRONTEND_URL`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT` e `VITE_REVERB_SCHEME`.
+- O envio de credenciais depende de SMTP activo. Em Gmail, use uma palavra-passe de aplicacao, nao a senha normal da conta.
