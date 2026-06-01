@@ -11,7 +11,7 @@ class UserRequest extends ApiFormRequest
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
         $currentUser = $this->routeId() ? \App\Models\User::find($this->routeId()) : null;
         $emailRules = ['nullable', 'email', 'max:200', Rule::unique('users', 'email')->ignore($this->routeId())];
-        $phoneRules = ['nullable', 'string', 'regex:/^(82|83|84|85|86|87)[0-9]{7}$/', Rule::unique('users', 'phone')->ignore($this->routeId())];
+        $phoneRules = [$required, 'string', 'regex:/^(82|83|84|85|86|87)[0-9]{7}$/', Rule::unique('users', 'phone')->ignore($this->routeId())];
 
         if (! $currentUser || $this->input('email') !== $currentUser->email) {
             $emailRules[] = Rule::unique('members', 'email');
@@ -29,7 +29,7 @@ class UserRequest extends ApiFormRequest
             'password' => ['nullable', 'string', 'min:8', 'max:255'],
             'role' => [$required, Rule::in(['ADMIN', 'COMMISSION', 'COMISSAO', 'FISCAL', 'VOTER', 'ELEITOR'])],
             'status' => ['sometimes', Rule::in(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'BLOCKED'])],
-            'delegation_id' => ['nullable', 'integer', 'exists:delegations,id'],
+            'delegation_id' => [$required, 'integer', 'exists:delegations,id'],
             'last_login_at' => ['nullable', 'date'],
         ];
     }
@@ -41,7 +41,9 @@ class UserRequest extends ApiFormRequest
             'email.email' => 'Informe um email válido.',
             'email.unique' => 'Este email já foi registado no sistema.',
             'phone.unique' => 'Este contacto já foi registado no sistema.',
+            'phone.required' => 'Informe o contacto do utilizador.',
             'phone.regex' => 'Informe um número moçambicano válido com 9 dígitos, começando por 82, 83, 84, 85, 86 ou 87.',
+            'delegation_id.required' => 'Seleccione a delegação do utilizador.',
             'password.required' => 'Informe a palavra-passe do utilizador.',
             'password.min' => 'A palavra-passe deve ter pelo menos 8 caracteres.',
             'role.required' => 'Seleccione o perfil do utilizador.',

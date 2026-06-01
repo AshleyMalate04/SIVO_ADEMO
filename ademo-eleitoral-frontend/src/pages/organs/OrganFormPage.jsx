@@ -18,6 +18,7 @@ export default function OrganFormPage() {
   const [positions, setPositions] = useState(defaultPositions)
   const [newPosition, setNewPosition] = useState('')
   const [organ, setOrgan] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!isEditing) return
@@ -67,8 +68,8 @@ export default function OrganFormPage() {
       .map((position) => ({ ...position, name: position.name.trim() }))
       .filter((position) => position.name)
 
-    if (!name) {
-      notify.error('Nome obrigatório.', 'Informe o nome do órgão.')
+    if (!name || !description) {
+      notify.error('Campos obrigatórios.', 'Informe o nome e a descrição do órgão.')
       return
     }
 
@@ -78,6 +79,7 @@ export default function OrganFormPage() {
     }
 
     try {
+      setSaving(true)
       const savedOrgan = isEditing
         ? await organService.update(id, { name, description, status: organ?.status ?? 'ACTIVE' })
         : await organService.create({ name, description, status: 'ACTIVE' })
@@ -98,6 +100,8 @@ export default function OrganFormPage() {
       navigate('/orgaos-cargos')
     } catch (error) {
       notify.error('Órgão não guardado.', error.response?.data?.message || 'Verifique os campos informados.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -117,12 +121,12 @@ export default function OrganFormPage() {
         <h2>{isEditing ? 'Editar órgão' : 'Novo órgão'}</h2>
         <label className="form-field organ-name-field">
           <span>Nome do órgão</span>
-          <input name="name" placeholder="Nome do órgão" defaultValue={organ?.name ?? ''} />
+          <input name="name" required placeholder="Nome do órgão" defaultValue={organ?.name ?? ''} />
         </label>
 
         <label className="form-field">
           <span>Descrição</span>
-          <textarea name="description" data-optional="true" placeholder="Descreva a finalidade deste órgão." defaultValue={organ?.description ?? ''} />
+          <textarea name="description" required placeholder="Descreva a finalidade deste órgão." defaultValue={organ?.description ?? ''} />
         </label>
 
         <section className="roles-panel">
@@ -155,7 +159,7 @@ export default function OrganFormPage() {
 
         <div className="form-footer">
           <Link className="secondary-button" to="/orgaos-cargos">Cancelar</Link>
-          <button className="primary-action-button" type="submit">{isEditing ? 'Alterar dados' : 'Guardar órgão'}</button>
+          <button className="primary-action-button" type="submit" disabled={saving}>{saving ? 'A guardar...' : isEditing ? 'Alterar dados' : 'Guardar órgão'}</button>
         </div>
       </form>
     </section>

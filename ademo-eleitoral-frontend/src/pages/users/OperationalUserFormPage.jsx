@@ -12,6 +12,7 @@ export default function OperationalUserFormPage() {
   const isEditing = Boolean(id)
   const [delegations, setDelegations] = useState([])
   const [user, setUser] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     delegationService.list()
@@ -39,13 +40,26 @@ export default function OperationalUserFormPage() {
       status: user?.status === 'BLOCKED' ? 'SUSPENDED' : (user?.status ?? 'ACTIVE'),
     }
 
+    if (!payload.name || !payload.access_code || !payload.delegation_id || !payload.phone || !payload.role) {
+      notify.error('Campos obrigatórios.', 'Preencha todos os campos obrigatórios. Apenas o email é opcional.')
+      return
+    }
+
+    if (payload.phone && !/^(82|83|84|85|86|87)[0-9]{7}$/.test(payload.phone)) {
+      notify.error('Telefone inválido.', 'Informe um número moçambicano válido com 9 dígitos, começando por 82, 83, 84, 85, 86 ou 87.')
+      return
+    }
+
     try {
+      setSaving(true)
       if (isEditing) await userService.update(id, payload)
       else await userService.create(payload)
       notify.success(isEditing ? 'Dados do utilizador alterados.' : 'Utilizador registado com sucesso.')
       navigate('/comissao-fiscal')
     } catch (error) {
       notify.error('Utilizador não guardado.', getApiErrorMessage(error, payload))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -73,14 +87,14 @@ export default function OperationalUserFormPage() {
           </label>
           <label className="form-field select-field">
             <span>Delegação de Origem</span>
-            <select name="delegation_id" value={user?.delegation_id ?? ''} onChange={(event) => setUser((current) => ({ ...(current ?? {}), delegation_id: event.target.value }))}>
+            <select name="delegation_id" required value={user?.delegation_id ?? ''} onChange={(event) => setUser((current) => ({ ...(current ?? {}), delegation_id: event.target.value }))}>
               <option value="">Seleccione a delegação</option>
               {delegations.map((delegation) => <option key={delegation.id} value={delegation.id}>{delegation.name}</option>)}
             </select>
           </label>
           <label className="form-field">
             <span>Telefone</span>
-            <input name="phone" data-optional="true" defaultValue={user?.phone ?? ''} />
+            <input name="phone" required defaultValue={user?.phone ?? ''} />
           </label>
           <label className="form-field">
             <span>Email</span>
@@ -102,7 +116,7 @@ export default function OperationalUserFormPage() {
 
         <div className="form-footer">
           <Link className="secondary-button" to="/comissao-fiscal">Cancelar</Link>
-          <button className="primary-action-button" type="submit">{isEditing ? 'Alterar dados' : 'Guardar registo'}</button>
+          <button className="primary-action-button" type="submit" disabled={saving}>{saving ? 'A guardar...' : isEditing ? 'Alterar dados' : 'Guardar registo'}</button>
         </div>
       </form>
     </section>

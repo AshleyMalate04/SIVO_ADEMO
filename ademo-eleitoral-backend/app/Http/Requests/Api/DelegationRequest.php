@@ -13,8 +13,8 @@ class DelegationRequest extends ApiFormRequest
         return [
             'name' => [$required, 'string', 'max:150'],
             'province_id' => [$required, 'integer', 'exists:province,id'],
-            'district_id' => ['nullable', 'integer', 'exists:distrit,id'],
-            'address' => ['nullable', 'string'],
+            'district_id' => [$required, 'integer', 'exists:distrit,id'],
+            'address' => [$required, 'string'],
             'status' => ['sometimes', Rule::in(['ACTIVE', 'INACTIVE', 'SUSPENDED'])],
         ];
     }

@@ -77,6 +77,11 @@ export default function ElectionCandidateFormPage() {
     event.preventDefault()
     if (!selectedElection) return notify.error('Seleccione a eleição.')
     if (!form.member_id) return notify.error('Seleccione o membro que será promovido a candidato.')
+    if (!photoFile && !photoName) return notify.error('Foto obrigatória.', 'Seleccione a fotografia do candidato.')
+    if (!form.biography.trim() || !form.proposal.trim()) {
+      notify.error('Campos obrigatórios.', 'Preencha a biografia e a proposta do candidato.')
+      return
+    }
 
     const payload = new FormData()
     payload.append('member_id', Number(form.member_id))
@@ -123,14 +128,14 @@ export default function ElectionCandidateFormPage() {
         <div className="form-grid two-columns">
           <label className="form-field select-field">
             <span>Nome da Eleição</span>
-            <select value={form.election_id} onChange={(event) => setField('election_id', event.target.value)} disabled={isEditing}>
+            <select required value={form.election_id} onChange={(event) => setField('election_id', event.target.value)} disabled={isEditing}>
               <option value="">Seleccione a eleição</option>
               {elections.map((election) => <option key={election.id} value={election.id}>{`${election.title} (${election.status})`}</option>)}
             </select>
           </label>
           <label className="form-field select-field">
             <span>Promover Membro</span>
-            <select value={form.member_id} onChange={(event) => setField('member_id', event.target.value)} disabled={isEditing}>
+            <select required value={form.member_id} onChange={(event) => setField('member_id', event.target.value)} disabled={isEditing}>
               <option value="">Seleccione o membro aprovado</option>
               {members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
             </select>
@@ -142,7 +147,7 @@ export default function ElectionCandidateFormPage() {
 
         <div className="upload-grid">
           <section className="upload-card">
-            <span>Foto (Opcional)</span>
+            <span className="required-label">Foto <strong className="required-mark">*</strong></span>
             <div className="upload-dropzone">
               {photoPreview ? <img className="upload-preview" src={photoPreview} alt="Pré-visualização da fotografia" /> : <Image size={30} />}
               <p>{photoName || 'Upload da foto'}</p>
@@ -162,8 +167,8 @@ export default function ElectionCandidateFormPage() {
         </div>
 
         <div className="form-grid two-columns">
-          <label className="form-field"><span>Biografia</span><textarea value={form.biography} onChange={(event) => setField('biography', event.target.value)} /></label>
-          <label className="form-field"><span>Proposta</span><textarea value={form.proposal} onChange={(event) => setField('proposal', event.target.value)} /></label>
+          <label className="form-field"><span>Biografia</span><textarea required value={form.biography} onChange={(event) => setField('biography', event.target.value)} /></label>
+          <label className="form-field"><span>Proposta</span><textarea required value={form.proposal} onChange={(event) => setField('proposal', event.target.value)} /></label>
         </div>
 
         <div className="form-divider"></div>

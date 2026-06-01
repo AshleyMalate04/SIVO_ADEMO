@@ -12,6 +12,7 @@ export default function MemberFormPage() {
   const isEditing = Boolean(id)
   const [delegations, setDelegations] = useState([])
   const [member, setMember] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     delegationService.list()
@@ -39,8 +40,8 @@ export default function MemberFormPage() {
       status: member?.status ?? 'ACTIVE',
     }
 
-    if (!payload.name || !payload.member_code || !payload.delegation_id) {
-      notify.error('Campos obrigatórios.', 'Preencha o nome, código de membro e delegação de origem.')
+    if (!payload.name || !payload.member_code || !payload.delegation_id || !payload.phone || !payload.bi_number) {
+      notify.error('Campos obrigatórios.', 'Preencha todos os campos obrigatórios. Apenas o email é opcional.')
       return
     }
 
@@ -60,12 +61,15 @@ export default function MemberFormPage() {
     }
 
     try {
+      setSaving(true)
       if (isEditing) await memberService.update(id, payload)
       else await memberService.create(payload)
       notify.success(isEditing ? 'Dados do membro alterados.' : 'Membro registado com sucesso.')
       navigate('/membros')
     } catch (error) {
       notify.error('Membro não guardado.', getApiErrorMessage(error, payload))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -85,22 +89,22 @@ export default function MemberFormPage() {
         <div className="form-grid two-columns">
           <label className="form-field">
             <span>Nome</span>
-            <input name="name" defaultValue={member?.name ?? ''} />
+            <input name="name" required defaultValue={member?.name ?? ''} />
           </label>
           <label className="form-field">
             <span>Código de membro</span>
-            <input name="member_code" defaultValue={member?.member_code ?? ''} />
+            <input name="member_code" required defaultValue={member?.member_code ?? ''} />
           </label>
           <label className="form-field select-field">
             <span>Delegação de Origem</span>
-            <select name="delegation_id" value={member?.delegation_id ?? ''} onChange={(event) => setMember((current) => ({ ...(current ?? {}), delegation_id: event.target.value }))}>
+            <select name="delegation_id" required value={member?.delegation_id ?? ''} onChange={(event) => setMember((current) => ({ ...(current ?? {}), delegation_id: event.target.value }))}>
               <option value="">Seleccione a delegação</option>
               {delegations.map((delegation) => <option key={delegation.id} value={delegation.id}>{delegation.name}</option>)}
             </select>
           </label>
           <label className="form-field">
             <span>Telefone</span>
-            <input name="phone" inputMode="numeric" placeholder="84XXXXXXX" defaultValue={member?.phone ?? ''} />
+            <input name="phone" required inputMode="numeric" placeholder="84XXXXXXX" defaultValue={member?.phone ?? ''} />
           </label>
           <label className="form-field">
             <span>Email</span>
@@ -108,13 +112,13 @@ export default function MemberFormPage() {
           </label>
           <label className="form-field">
             <span>BI</span>
-            <input name="bi_number" placeholder="12345678901A" defaultValue={member?.bi_number ?? ''} />
+            <input name="bi_number" required placeholder="12345678901A" defaultValue={member?.bi_number ?? ''} />
           </label>
         </div>
 
         <div className="form-footer">
           <Link className="secondary-button" to="/membros">Cancelar</Link>
-          <button className="primary-action-button" type="submit">{isEditing ? 'Alterar dados' : 'Guardar registo'}</button>
+          <button className="primary-action-button" type="submit" disabled={saving}>{saving ? 'A guardar...' : isEditing ? 'Alterar dados' : 'Guardar registo'}</button>
         </div>
       </form>
     </section>
