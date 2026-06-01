@@ -83,11 +83,11 @@ class MemberController extends CrudController
                     ]
                 );
 
-                $emailQueued = AccessNotificationService::notifyInitialAccess($user);
+                $emailSent = AccessNotificationService::notifyInitialAccess($user);
                 AuditService::record($request, 'CONTA_DE_ELEITOR_CRIADA', 'User', $user->id, [
                     'member_id' => $member->id,
                     'access_code' => $user->access_code,
-                    'email_queued' => $emailQueued,
+                    'email_sent' => $emailSent,
                     'email_available' => (bool) $user->email,
                 ]);
             }

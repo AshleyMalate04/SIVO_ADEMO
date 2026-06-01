@@ -75,5 +75,5 @@ docker compose -f docker-compose.prod.yml exec backend php artisan optimize:clea
 - O ficheiro real `.env.production` tambem nao deve ir para o GitHub.
 - Para dominio real e HTTPS, ajuste `APP_URL`, `FRONTEND_URL`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT` e `VITE_REVERB_SCHEME`.
 - O envio de credenciais depende de SMTP activo. Em Gmail, use uma palavra-passe de aplicacao, nao a senha normal da conta.
-- O envio de email de credenciais e feito em fila para o registo responder imediatamente. Mantenha o servico `queue` activo em producao.
+- O envio de email de credenciais e feito no momento do registo. Se o SMTP falhar, o registo continua guardado e o erro fica nos logs do Laravel.
 - Para reduzir a chance de spam, use um remetente real, SPF/DKIM/DMARC configurados no dominio e evite usar `MAIL_FROM_ADDRESS` diferente do utilizador SMTP.
