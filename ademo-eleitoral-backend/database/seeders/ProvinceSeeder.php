@@ -12,15 +12,15 @@ class ProvinceSeeder extends Seeder
         foreach ([
             ['name' => 'Maputo Cidade', 'code' => 'MPT'],
             ['name' => 'Maputo Provincia', 'code' => 'MPM'],
-            ['name' => 'Gaza', 'code' => 'GAZ'],
-            ['name' => 'Inhambane', 'code' => 'INH'],
-            ['name' => 'Sofala', 'code' => 'SOF'],
-            ['name' => 'Manica', 'code' => 'MAN'],
-            ['name' => 'Tete', 'code' => 'TET'],
-            ['name' => 'Zambezia', 'code' => 'ZAM'],
-            ['name' => 'Nampula', 'code' => 'NAM'],
-            ['name' => 'Cabo Delgado', 'code' => 'CAB'],
             ['name' => 'Niassa', 'code' => 'NIA'],
+            ['name' => 'Cabo Delgado', 'code' => 'CAB'],
+            ['name' => 'Nampula', 'code' => 'NAM'],
+            ['name' => 'Zambezia', 'code' => 'ZAM'],
+            ['name' => 'Tete', 'code' => 'TET'],
+            ['name' => 'Manica', 'code' => 'MAN'],
+            ['name' => 'Sofala', 'code' => 'SOF'],
+            ['name' => 'Inhambane', 'code' => 'INH'],
+            ['name' => 'Gaza', 'code' => 'GAZ'],
         ] as $province) {
             Province::updateOrCreate(
                 ['code' => $province['code']],
