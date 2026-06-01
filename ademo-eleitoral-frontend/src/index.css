@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ademo-bg: #f8fafc;
+  --color-ademo-surface: #ffffff;
+  --color-ademo-surface-soft: #f1f5f9;
+  --color-ademo-text: #0f172a;
+  --color-ademo-text-muted: #475569;
+  --color-ademo-text-soft: #64748b;
+  --color-ademo-primary: #9f1239;
+  --color-ademo-primary-hover: #881337;
+  --color-ademo-primary-soft: #ffe4e6;
+  --color-ademo-success: #166534;
+  --color-ademo-success-soft: #dcfce7;
+  --color-ademo-warning: #92400e;
+  --color-ademo-warning-soft: #fef3c7;
+  --color-ademo-danger: #991b1b;
+  --color-ademo-danger-hover: #7f1d1d;
+  --color-ademo-danger-soft: #fee2e2;
+  --color-ademo-info: #1d4ed8;
+  --color-ademo-info-soft: #dbeafe;
+  --color-ademo-border: #cbd5e1;
+  --color-ademo-border-strong: #94a3b8;
+  --color-ademo-focus: #f59e0b;
+  --color-ademo-indigo: #3730a3;
+  --color-ademo-indigo-soft: #e0e7ff;
+}
+
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #0f172a;
+  background: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: #f8fafc;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
