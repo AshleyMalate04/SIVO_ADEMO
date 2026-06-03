@@ -26,14 +26,19 @@ export default function DelegationsPage() {
   const canManage = canManageResource(role, 'delegations')
   const canInactivate = canMutateStatus(role, 'delegations')
   const [delegations, setDelegations] = useState([])
+  const [provinces, setProvinces] = useState([])
   const [filters, setFilters] = useState({ q: '', province: '', status: '' })
   const [loading, setLoading] = useState(true)
 
   const loadDelegations = async () => {
     try {
       setLoading(true)
-      const records = await delegationService.list()
+      const [records, provinceRecords] = await Promise.all([
+        delegationService.list(),
+        delegationService.provinces(),
+      ])
       setDelegations(records.map(normalizeDelegation).filter((item) => normalizeStatus(item.rawStatus) !== 'INACTIVE'))
+      setProvinces(provinceRecords)
     } catch (error) {
       notify.error('Não foi possível carregar delegações.', error.response?.data?.message || 'Verifique se a API esta activa.')
     } finally {
@@ -76,7 +81,7 @@ export default function DelegationsPage() {
         <label className="filter-field">
           <select value={filters.province} onChange={(event) => setFilters((current) => ({ ...current, province: event.target.value }))}>
             <option value="">Todas as provincias</option>
-            {[...new Set(delegations.map((item) => item.province).filter(Boolean))].map((province) => <option key={province} value={province}>{province}</option>)}
+            {provinces.map((province) => <option key={province.id} value={province.name}>{province.name}</option>)}
           </select>
         </label>
         <label className="filter-field">

@@ -6,6 +6,9 @@ import { delegationService } from '../../services/delegationService'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { onlyActive } from '../../utils/statusFilters'
 
+const uppercaseName = (value) => value.replace(/\s+/g, ' ').toLocaleUpperCase('pt-PT')
+const hasTwoWords = (value) => value.trim().split(/\s+/).length >= 2
+
 export default function OperationalUserFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -31,7 +34,7 @@ export default function OperationalUserFormPage() {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const payload = {
-      name: formData.get('name')?.trim(),
+      name: uppercaseName(formData.get('name')?.trim() || ''),
       access_code: formData.get('access_code')?.trim(),
       delegation_id: formData.get('delegation_id') ? Number(formData.get('delegation_id')) : null,
       phone: formData.get('phone')?.trim() || null,
@@ -42,6 +45,11 @@ export default function OperationalUserFormPage() {
 
     if (!payload.name || !payload.access_code || !payload.delegation_id || !payload.phone || !payload.role) {
       notify.error('Campos obrigatórios.', 'Preencha todos os campos obrigatórios. Apenas o email é opcional.')
+      return
+    }
+
+    if (!hasTwoWords(payload.name)) {
+      notify.error('Nome incompleto.', 'Informe o nome completo do utilizador, com pelo menos duas palavras.')
       return
     }
 
@@ -79,7 +87,7 @@ export default function OperationalUserFormPage() {
         <div className="form-grid two-columns">
           <label className="form-field">
             <span>Nome</span>
-            <input name="name" required defaultValue={user?.name ?? ''} />
+            <input name="name" required defaultValue={user?.name ?? ''} onInput={(event) => { event.currentTarget.value = uppercaseName(event.currentTarget.value) }} />
           </label>
           <label className="form-field">
             <span>Código de acesso</span>

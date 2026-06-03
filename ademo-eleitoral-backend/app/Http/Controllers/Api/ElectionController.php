@@ -7,14 +7,13 @@ use App\Http\Requests\Api\ElectionRequest;
 use App\Http\Requests\Api\ElectionStatusRequest;
 use App\Http\Requests\Api\ElectionTeamRequest;
 use App\Http\Requests\Api\ElectionTeamStatusRequest;
+use App\Models\Delegation;
 use App\Models\Election;
 use App\Models\ElectionTeam;
 use App\Models\ElectionVoter;
-use App\Models\Position;
 use App\Models\Organ;
-use App\Models\Delegation;
+use App\Models\Position;
 use App\Services\AuditService;
-use App\Services\ElectionStatusSyncService;
 use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use App\Support\StatusNormalizer;
@@ -22,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 class ElectionController extends CrudController
 {
@@ -32,10 +32,6 @@ class ElectionController extends CrudController
     protected array $with = ['organ', 'position', 'delegation', 'parentElection', 'creator', 'team.user', 'team.user.delegation'];
 
     protected array $searchable = ['title', 'description'];
-
-    public function __construct(private readonly ElectionStatusSyncService $statusSyncService)
-    {
-    }
 
     public function store(Request $request): JsonResponse
     {
@@ -60,6 +56,7 @@ class ElectionController extends CrudController
         AuditService::record($request, 'CRIACAO_DE_ELEICAO', 'Election', $election->id, [
             'election_id' => $election->id,
         ]);
+        app(NotificationService::class)->notifyAdminsAboutElectionCreated($election->fresh());
 
         return ApiResponse::success($election->load($this->with), 'Eleicao criada com sucesso.', 201);
     }
@@ -90,10 +87,27 @@ class ElectionController extends CrudController
         return ApiResponse::success($election->fresh($this->with), 'Registo actualizado com sucesso.');
     }
 
+    public function destroy(Request $request, int|string $id): JsonResponse
+    {
+        $election = Election::findOrFail($id);
+
+        if ($election->status !== 'PROGRAMADA') {
+            return ApiResponse::error('So pode eliminar eleicoes no estado programada.', 422);
+        }
+
+        AuditService::record($request, 'ELIMINACAO_DE_ELEICAO', 'Election', $election->id, [
+            'election_id' => $election->id,
+            'title' => $election->title,
+            'status' => $election->status,
+        ]);
+
+        $election->delete();
+
+        return ApiResponse::success(null, 'Eleicao eliminada com sucesso.');
+    }
+
     public function index(Request $request): JsonResponse
     {
-        $this->statusSyncService->sync();
-
         $query = Election::query();
 
         $relations = $this->requestedRelations($request);
@@ -132,7 +146,7 @@ class ElectionController extends CrudController
             });
         }
 
-        $sortBy = $request->string('sort_by', 'id')->toString();
+        $sortBy = $this->safeElectionSortColumn($request->string('sort_by', 'id')->toString());
         $sortDirection = $request->string('sort_direction', 'desc')->toString() === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sortBy, $sortDirection);
 
@@ -165,8 +179,6 @@ class ElectionController extends CrudController
 
     public function show(Request $request, int|string $id): JsonResponse
     {
-        $this->statusSyncService->sync();
-
         $user = $request->user();
 
         if ($user && $user->isVoter()) {
@@ -388,5 +400,10 @@ class ElectionController extends CrudController
                 abort(ApiResponse::error('A delegação seleccionada está inactiva.', 422));
             }
         }
+    }
+
+    private function safeElectionSortColumn(string $column): string
+    {
+        return in_array($column, Schema::getColumnListing('elections'), true) ? $column : 'id';
     }
 }

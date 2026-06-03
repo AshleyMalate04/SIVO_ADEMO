@@ -96,6 +96,19 @@ export default function ResultsPage() {
     physical: Number(item.physical_votes ?? 0),
     total: Number(item.votes ?? 0),
   })).sort((a, b) => b.total - a.total), [result])
+  const visualRows = useMemo(() => {
+    const blankVotes = Number(result?.blank_votes ?? 0)
+    if (blankVotes <= 0) return rows
+
+    return [...rows, {
+      id: 'blank',
+      name: 'Votos em branco',
+      online: 0,
+      physical: 0,
+      total: blankVotes,
+      isBlank: true,
+    }].sort((a, b) => b.total - a.total)
+  }, [result?.blank_votes, rows])
 
   const selectedElection = elections.find((election) => String(election.id) === String(selectedId))
   const totalVotes = Number(result?.total_votes ?? 0)
@@ -205,20 +218,21 @@ export default function ResultsPage() {
           <section className="partial-results-card professional-results-card">
             <header><h2><BarChart3 size={22} /> {isVoter ? 'Resultados parciais' : 'Resultado final'}: {result.election?.position?.name ?? 'Cargo'}</h2></header>
             <div className="results-bars">
-              {rows.map((row) => {
+              {visualRows.map((row) => {
                 const percent = totalVotes > 0 ? Math.round((row.total / totalVotes) * 100) : 0
                 return (
                   <article className="result-bar-row" key={row.id}>
                     <div>
                       <div className='baixo'>
                         <strong>{row.name}</strong>
-                        {!isVoter ? <small>Online: {row.online} · Presencial: {row.physical}</small> : null}
+                        {!isVoter && !row.isBlank ? <small>Online: {row.online} · Presencial: {row.physical}</small> : null}
+                        {row.isBlank ? <small>Votos em branco apurados</small> : null}
                       </div>
                      
                       <b>{row.total} voto(s) · {percent}%</b>
                       {/* {!isVoter ? <small>Online: {row.online} · Presencial: {row.physical}</small> : null} */}
                     </div>
-                    <span className="bar-track"><span className="bar-fill red" style={{ width: `${percent}%` }}></span></span>
+                    <span className="bar-track"><span className="bar-fill" style={{ width: `${percent}%` }}></span></span>
                   </article>
                 )
               })}

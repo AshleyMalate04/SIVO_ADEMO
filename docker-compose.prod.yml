@@ -47,7 +47,26 @@ services:
       - ./ademo-eleitoral-backend/.env.production
     environment:
       RUN_MIGRATIONS: "false"
-    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90"]
+    command: ["php", "artisan", "queue:work", "--queue=notifications,mail,default", "--sleep=3", "--tries=3", "--timeout=90", "--backoff=60", "--memory=256", "--max-time=3600"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    volumes:
+      - backend_storage:/var/www/html/storage
+      - backend_cache:/var/www/html/bootstrap/cache
+
+  scheduler:
+    build:
+      context: ./ademo-eleitoral-backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./ademo-eleitoral-backend/.env.production
+    environment:
+      RUN_MIGRATIONS: "false"
+    command: ["php", "artisan", "schedule:work"]
     depends_on:
       postgres:
         condition: service_healthy

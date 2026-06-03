@@ -39,6 +39,16 @@ export const commonStatusLabel = (status) => ({
   REJECTED: 'Rejeitado',
 }[normalizeStatus(status)] ?? String(status ?? 'Indefinido'))
 
+export const commonStatusClass = (status) => ({
+  ACTIVE: 'active',
+  AUTHORIZED: 'active',
+  APPROVED: 'active',
+  INACTIVE: 'inactive',
+  REMOVED: 'inactive',
+  REJECTED: 'inactive',
+  SUSPENDED: 'suspended',
+  BLOCKED: 'suspended',
+}[normalizeStatus(status)] ?? 'scheduled')
 
 export const isInactiveStatus = (status) => normalizeStatus(status) === 'INACTIVE'
 export const isSuspendedStatus = (status) => normalizeStatus(status) === 'SUSPENDED'

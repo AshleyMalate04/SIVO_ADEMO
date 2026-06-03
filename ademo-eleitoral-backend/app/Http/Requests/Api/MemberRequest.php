@@ -8,6 +8,21 @@ use Illuminate\Validation\Rule;
 
 class MemberRequest extends ApiFormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $data = [];
+
+        if ($this->has('name')) {
+            $data['name'] = $this->uppercaseName($this->input('name'));
+        }
+
+        if ($this->has('bi_number')) {
+            $data['bi_number'] = $this->input('bi_number') ? mb_strtoupper(trim((string) $this->input('bi_number')), 'UTF-8') : $this->input('bi_number');
+        }
+
+        $this->merge($data);
+    }
+
     public function rules(): array
     {
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
@@ -22,7 +37,7 @@ class MemberRequest extends ApiFormRequest
                 Rule::unique('members', 'member_code')->ignore($this->routeId()),
                 Rule::unique('users', 'access_code')->ignore($linkedUserId),
             ],
-            'name' => [$required, 'string', 'max:150'],
+            'name' => [$required, 'string', 'max:150', 'regex:/^\s*\S+\s+\S+.*$/u'],
             'phone' => [
                 $required,
                 'string',
@@ -59,6 +74,16 @@ class MemberRequest extends ApiFormRequest
             'delegation_id.required' => 'Seleccione a delegação do membro.',
             'delegation_id.exists' => 'A delegação seleccionada não existe.',
             'name.required' => 'Informe o nome do membro.',
+            'name.regex' => 'Informe o nome completo do membro, com pelo menos duas palavras.',
         ];
+    }
+
+    private function uppercaseName(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        return mb_strtoupper(preg_replace('/\s+/u', ' ', trim($value)), 'UTF-8');
     }
 }

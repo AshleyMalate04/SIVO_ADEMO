@@ -92,8 +92,8 @@ export default function ElectionDetailsPage() {
       <div className="detail-layout">
         <div className="detail-main">
           <header className="management-header election-detail-heading">
-            <span>Detalhes da eleição #{id}</span>
-            <h1>{election.title}</h1>
+            {/* <span>Detalhes da eleição #{id}</span>
+            <h1>{election.title}</h1> */}
           </header>
           <section className="election-detail-card hero-detail-card">
             <div className="detail-title-row">
@@ -150,7 +150,7 @@ export default function ElectionDetailsPage() {
             </div>
           </section> : null}
         </div>
-        <aside className="election-side-card professional-side-card">
+        {/* <aside className="election-side-card professional-side-card">
           <h2>Estado da eleição</h2>
           <p><span>Situação</span><strong>{getElectionStatusLabel(election.status)}</strong></p>
           {canVote ? <p><span>Eleitor autorizado</span><CheckCircle2 size={16} /> {election.has_voted ? 'Você já votou nesta eleição.' : canVoteNow ? 'Já pode votar.' : 'Votação indisponível neste estado.'}</p> : null}
@@ -161,7 +161,7 @@ export default function ElectionDetailsPage() {
           {canEdit && !isVoterView && election.status === 'CONCLUIDA' ? <Link className="secondary-button" to={`/eleicoes/${id}/resultados-presenciais`}>Inserir presenciais</Link> : null}
           {canEdit && !isVoterView && election.status === 'CONCLUIDA' ? <button className="primary-action-button" type="button" disabled={saving} onClick={() => setPublishChoiceOpen(true)}>Publicar resultados</button> : null}
           {['PROGRAMADA', 'EM_VOTACAO', 'CONCLUIDA', 'RESULTADOS_PUBLICADOS'].includes(election.status) ? <Link className="primary-action-button" to={isVoterView ? `/portal-eleitor/resultados?eleicao=${id}` : `/resultados/${id}`}>Consultar resultados</Link> : null}
-        </aside>
+        </aside> */}
       </div>
       {publishChoiceOpen ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">

@@ -19,11 +19,11 @@ class AccessNotificationService
         }
 
         try {
-            Mail::to($user->email, $user->name)->send(new InitialAccessMail($user));
+            Mail::to($user->email, $user->name)->queue(new InitialAccessMail($user));
 
             return true;
         } catch (Throwable $exception) {
-            Log::warning('Falha ao enviar credenciais iniciais por email.', [
+            Log::warning('Falha ao colocar credenciais iniciais na fila de email.', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'error' => $exception->getMessage(),

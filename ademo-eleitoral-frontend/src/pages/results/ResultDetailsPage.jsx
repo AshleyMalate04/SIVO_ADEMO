@@ -25,6 +25,19 @@ export default function ResultDetailsPage() {
     physical: Number(item.physical_votes ?? 0),
     total: Number(item.votes ?? 0),
   })).sort((a, b) => b.total - a.total), [result])
+  const visualRows = useMemo(() => {
+    const blankVotes = Number(result?.blank_votes ?? 0)
+    if (blankVotes <= 0) return rows
+
+    return [...rows, {
+      id: 'blank',
+      name: 'Votos em branco',
+      online: 0,
+      physical: 0,
+      total: blankVotes,
+      isBlank: true,
+    }].sort((a, b) => b.total - a.total)
+  }, [result?.blank_votes, rows])
 
   if (loading) return <Loading label="A carregar detalhes do resultado..." />
   if (!result) return <section className="management-page"><p className="empty-table-message">Resultado não encontrado.</p></section>
@@ -84,12 +97,18 @@ export default function ResultDetailsPage() {
       <section className="partial-results-card professional-results-card">
         <header><h2><BarChart3 size={22} /> Apuramento visual</h2></header>
         <div className="results-bars">
-          {rows.map((row) => {
+          {visualRows.map((row) => {
             const percent = Number(result.total_votes) > 0 ? Math.round((row.total / Number(result.total_votes)) * 100) : 0
             return (
               <article className="result-bar-row" key={`bar-${row.id}`}>
-                <div><strong>{row.name}</strong><b>{percent}%</b></div>
-                <span className="bar-track"><span className="bar-fill red" style={{ width: `${percent}%` }}></span></span>
+                <div>
+                  <span className="baixo">
+                    <strong>{row.name}</strong>
+                    {!row.isBlank ? <small>Online: {row.online} · Presencial: {row.physical}</small> : <small>Votos em branco apurados</small>}
+                  </span>
+                  <b>{percent}%</b>
+                </div>
+                <span className="bar-track"><span className="bar-fill" style={{ width: `${percent}%` }}></span></span>
               </article>
             )
           })}

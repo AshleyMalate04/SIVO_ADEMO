@@ -13,6 +13,7 @@ use App\Models\Member;
 use App\Models\Vote;
 use App\Models\VoteReceipt;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -145,6 +146,7 @@ class VotingController extends Controller
             'is_blank' => $isBlank,
         ]);
         event(new ParticipacaoActualizada(Election::findOrFail($id)));
+        app(NotificationService::class)->notifyVoteConfirmed($request->user(), $election, $receipt->public_code);
 
         return ApiResponse::success(['vote' => $vote, 'receipt' => $receipt], 'Voto registado com sucesso.', 201);
     }

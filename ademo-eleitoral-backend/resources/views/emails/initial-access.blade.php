@@ -1,20 +1,32 @@
-<!doctype html>
-<html lang="pt">
-<body style="margin:0;background:#f5f7fb;color:#172033;font-family:Arial,Helvetica,sans-serif;">
-  <div style="max-width:640px;margin:0 auto;padding:32px 18px;">
-    <div style="background:#ffffff;border:1px solid #e5e9f2;border-radius:8px;padding:28px;">
-      <p style="margin:0 0 18px;">Olá, {{ $name }}</p>
-      <p style="margin:0 0 18px;">A sua conta foi criada na plataforma ADEMO Eleitoral.</p>
-      <p style="margin:0 0 10px;">Utilize os dados abaixo para aceder ao sistema:</p>
-      <p style="margin:0 0 8px;"><strong>Código de acesso:</strong> {{ $accessCode }}</p>
-      <p style="margin:0 0 18px;"><strong>Palavra-passe inicial:</strong> {{ $initialPassword }}</p>
-      <p style="margin:0 0 18px;">Após entrar, aceda às configurações para alterar a sua palavra-passe.</p>
-      <p style="margin:0 0 22px;">
-        <a href="{{ $loginUrl }}" style="display:inline-block;background:#b91c1c;color:#ffffff;text-decoration:none;border-radius:6px;padding:12px 18px;font-weight:700;">Aceder à plataforma</a>
-      </p>
-      <p style="margin:0 0 18px;">Se o botão não abrir, copie este endereço no navegador:<br>{{ $loginUrl }}</p>
-      <p style="margin:0;">Atenciosamente,<br>Equipa ADEMO Eleitoral</p>
-    </div>
+@extends('emails.layout')
+
+@section('title', 'Dados de acesso à plataforma ADEMO Eleitoral')
+@section('preheader', 'A sua conta foi criada na plataforma ADEMO Eleitoral.')
+
+@section('content')
+  <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">Olá, {{ $name }}</p>
+
+  <p style="margin:0 0 18px;font-size:16px;line-height:1.65;color:#263244;">
+    A sua conta foi criada na plataforma ADEMO Eleitoral. Utilize os dados abaixo para aceder ao sistema.
+  </p>
+
+  <div style="margin:0 0 22px;background:#f8fafc;border:1px solid #dde3ec;border-radius:8px;padding:16px 18px;">
+    <p style="margin:0 0 8px;"><strong>Código de acesso:</strong> {{ $accessCode }}</p>
+    <p style="margin:0;"><strong>Palavra-passe inicial:</strong> {{ $initialPassword }}</p>
   </div>
-</body>
-</html>
+
+  {{-- <p style="margin:0 0 18px;font-size:16px;line-height:1.65;color:#263244;">
+    Após entrar, aceda às configurações para alterar a sua palavra-passe.
+  </p> --}}
+
+  <p style="margin:0 0 24px;">
+    <a href="{{ $loginUrl }}" style="display:inline-block;background:#b91c1c;color:#ffffff;text-decoration:none;border-radius:6px;padding:12px 18px;font-weight:700;">
+      Aceder à plataforma
+    </a>
+  </p>
+
+  <p style="margin:0;color:#607086;font-size:13px;line-height:1.6;">
+    Se o botão não abrir, copie este endereço no navegador:<br>
+    <span style="word-break:break-all;">{{ $loginUrl }}</span>
+  </p>
+@endsection

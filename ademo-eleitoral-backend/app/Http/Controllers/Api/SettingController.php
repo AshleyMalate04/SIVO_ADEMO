@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,6 +65,7 @@ class SettingController extends CrudController
             // já foi gravada numa primeira tentativa.
             if (Hash::check($data['password'], $user->password)) {
                 $user->forceFill(['password_changed_at' => now()])->save();
+                app(NotificationService::class)->notifyPasswordChanged($user->fresh());
 
                 return ApiResponse::success([
                     'must_change_password' => false,
@@ -80,6 +82,7 @@ class SettingController extends CrudController
             'password_changed_at' => now(),
         ])->save();
         AuditService::record($request, 'SENHA_ACTUALIZADA', 'User', $user->id);
+        app(NotificationService::class)->notifyPasswordChanged($user->fresh());
 
         return ApiResponse::success([
             'must_change_password' => false,

@@ -9,7 +9,7 @@ import { memberService } from '../../services/memberService'
 import { useAuth } from '../../hooks/useAuth'
 import { notify } from '../../utils/notify'
 import { canCreateResource, canManageResource, canMutateStatus } from '../../utils/rolePermissions'
-import { normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { commonStatusClass, normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
 
 const formatDate = (value) => {
   if (!value) return 'Sem data'
@@ -132,7 +132,7 @@ export default function MembersPage() {
                     <td>{member.delegation}</td>
                     <td>{member.registeredAt}</td>
                     <td>{member.registeredBy}</td>
-                    <td><span className="status-pill"><span></span>{member.status}</span></td>
+                    <td><span className={`status-pill ${commonStatusClass(member.rawStatus ?? member.status)}`}><span></span>{member.status}</span></td>
                     <td>
                       <RowActions
                         canManage={canManage}

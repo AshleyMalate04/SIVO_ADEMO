@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 abstract class CrudController extends Controller
 {
@@ -26,6 +26,11 @@ abstract class CrudController extends Controller
 
     /** @var class-string<FormRequest>|null */
     protected ?string $requestClass = null;
+
+    /**
+     * @var array<string, array<int, string>>
+     */
+    private static array $tableColumns = [];
 
     public function index(Request $request): JsonResponse
     {
@@ -53,7 +58,7 @@ abstract class CrudController extends Controller
             });
         }
 
-        $sortBy = $request->string('sort_by', 'id')->toString();
+        $sortBy = $this->safeSortColumn($request->string('sort_by', 'id')->toString());
         $sortDirection = $request->string('sort_direction', 'desc')->toString() === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sortBy, $sortDirection);
 
@@ -174,5 +179,15 @@ abstract class CrudController extends Controller
         $formRequest->validateResolved();
 
         return $formRequest->validated();
+    }
+
+    private function safeSortColumn(string $column): string
+    {
+        $model = new $this->model;
+        $table = $model->getTable();
+
+        self::$tableColumns[$table] ??= Schema::getColumnListing($table);
+
+        return in_array($column, self::$tableColumns[$table], true) ? $column : $model->getKeyName();
     }
 }

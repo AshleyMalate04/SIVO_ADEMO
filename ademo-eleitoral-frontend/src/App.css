@@ -7589,3 +7589,513 @@ span{
     font-size: 30px;
     font-weight: 600;
 }
+
+.table-card div {
+    width: 100%;
+    
+}
+
+/* Ajustes finais: filtros horizontais, configuracoes sem acessibilidade e overflow. */
+/* html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+} */
+
+.auth-shell {
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  min-height: calc(100dvh - 92px) !important;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(360px, 0.9fr) !important;
+  justify-content: center;
+  gap: clamp(28px, 5vw, 76px);
+  padding: clamp(22px, 4vh, 42px) clamp(28px, 7vw, 96px) !important;
+  overflow-x: hidden;
+}
+
+.auth-brand-panel,
+.auth-form-panel,
+.auth-form {
+  min-width: 0;
+}
+
+.auth-brand-panel {
+  gap: clamp(18px, 3vh, 34px) !important;
+}
+
+.auth-logo {
+  width: min(350px, 72%) !important;
+}
+
+.auth-brand-panel h1 {
+  max-width: 380px !important;
+  font-size: clamp(24px, 2.2vw, 32px) !important;
+}
+
+.auth-form {
+  width: min(430px, 100%) !important;
+  gap: 18px !important;
+}
+
+.auth-copy {
+  margin-bottom: 20px !important;
+}
+
+.auth-copy h2 {
+  font-size: clamp(25px, 2vw, 30px) !important;
+}
+
+.auth-copy p {
+  font-size: 14px !important;
+}
+
+.settings-password-only {
+  grid-template-columns: minmax(0, 760px) !important;
+}
+
+.voter-page .voter-filters {
+display: grid !important;
+grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.voter-page .search-filter {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.status-filter-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 0 10px;
+  scrollbar-color: #f40000 #eef2f7;
+  scrollbar-width: thin;
+}
+
+.status-filter-scroll::-webkit-scrollbar {
+  height: 9px;
+}
+
+.status-filter-scroll::-webkit-scrollbar-track {
+  background: #eef2f7;
+  border-radius: 999px;
+}
+
+.status-filter-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #f40000, #b00000);
+  border: 2px solid #eef2f7;
+  border-radius: 999px;
+}
+
+.voter-page .status-filter-buttons {
+  display: flex !important;
+  grid-template-columns: none !important;
+  flex-wrap: nowrap !important;
+  width: max-content;
+  min-width: max-content;
+  gap: 10px;
+}
+
+.voter-page .filter-button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  white-space: nowrap !important;
+}
+
+.elections-table {
+  overflow-x: auto;
+}
+
+.elections-table table {
+  min-width: 900px !important;
+  table-layout: auto;
+}
+
+.elections-table th,
+.elections-table td {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.elections-table th:last-child,
+.elections-table td:last-child {
+  width: 170px !important;
+}
+
+.elections-table .actions-cell {
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 980px) {
+  .voter-page .voter-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .status-filter-scroll {
+    margin-right: -16px;
+    padding-right: 16px;
+  }
+
+  .voter-page .status-filter-buttons {
+    width: max-content;
+  }
+
+  .elections-table {
+    overflow: visible;
+  }
+}
+.filter-button.active {
+    border-color:  var(--color-ademo-primary, #9f1239) !important;
+  background-color: var(--color-ademo-primary, #9f1239) !important;
+}
+
+.status-filter-scroll {
+    scrollbar-color: #9f1239 #eef2f7;
+}
+
+
+
+/* .detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.75fr);
+    gap: clamp(18px, 2vw, 28px);
+    align-items: start;
+} */
+.detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+    
+}
+
+.election-detail-page .detail-main {
+  width: 100%;
+  max-width: none;
+}
+
+.status-pill.active {
+  color: #166534 !important;
+  background: #dcfce7 !important;
+  border: 1px solid #86efac !important;
+}
+
+.status-pill.active span {
+  background: #16a34a !important;
+}
+
+.status-pill.suspended {
+  color: #92400e !important;
+  background: #fef3c7 !important;
+  border: 1px solid #fcd34d !important;
+}
+
+.status-pill.suspended span {
+  background: #f59e0b !important;
+}
+
+.status-pill.inactive {
+  color: #991b1b !important;
+  background: #fee2e2 !important;
+  border: 1px solid #fecaca !important;
+}
+
+.status-pill.inactive span {
+  background: #dc2626 !important;
+}
+
+.status-pill.voting {
+  color: #9f1239 !important;
+  background: #ffe4e6 !important;
+  border: 1px solid #fecdd3 !important;
+}
+
+.status-pill.voting span {
+  background: #9f1239 !important;
+}
+
+.bar-fill,
+.bar-fill.red {
+  background: linear-gradient(90deg, #9f1239, #be123c) !important;
+}
+
+.primary-button,
+.primary-action-button,
+.mode-tab.active,
+.filter-button.active {
+  background-color: #9f1239 !important;
+  border-color: #9f1239 !important;
+}
+
+.header-link:hover,
+.table-action:hover,
+.section-heading a,
+.text-action-link,
+.back-link,
+.ballot-more-link {
+  color: #9f1239 !important;
+}
+
+.loading-state span {
+  border-top-color: #9f1239 !important;
+}
+
+.stat-card,
+.result-stat-card {
+  border-left-color: #9f1239 !important;
+}
+
+.stat-card strong,
+.stat-icon,
+.result-stat-card svg,
+.winner-mini,
+.modal-kicker {
+  color: #9f1239 !important;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus,
+.filter-field:focus-within,
+.toolbar-search:focus-within,
+.searchable-select-trigger:focus {
+  border-color: #9f1239 !important;
+  box-shadow: 0 0 0 3px rgb(159 18 57 / 0.14) !important;
+}
+
+.vote-card.selected,
+.ballot-option.selected,
+.election-option.selected {
+  border-color: #9f1239 !important;
+  box-shadow: 0 0 0 3px rgb(159 18 57 / 0.1) !important;
+}
+
+.status-filter-scroll {
+  scrollbar-color: #9f1239 #eef2f7 !important;
+}
+
+.status-filter-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #9f1239, #be123c) !important;
+}
+
+/* =========================================================
+   Ajuste final de tipografia mobile
+   Mantem o desktop intacto e deixa as telas pequenas mais leves.
+========================================================= */
+@media (max-width: 760px) {
+  html,
+  body,
+  #root {
+    font-size: 14px;
+  }
+
+  .app-shell {
+    font-size: 14px !important;
+  }
+
+  .app-main {
+    padding: 12px !important;
+  }
+
+  .app-main h1,
+  .management-header h1,
+  .content-page-header h1,
+  .form-page h1,
+  .success-page h1,
+  .page-intro h1,
+  .readable-detail-page .management-header h1,
+  .result-detail-page .management-header h1,
+  .candidate-detail-page .management-header h1,
+  .election-detail-page .management-header h1 {
+    font-size: 22px !important;
+    line-height: 1.18 !important;
+  }
+
+  .app-main h2,
+  .management-form-card h2,
+  .settings-card h2,
+  .section-title-row h2,
+  .election-form-card h2,
+  .candidate-form-card h2,
+  .organ-form-card h2,
+  .roles-panel h2,
+  .readable-detail-page h2,
+  .result-detail-page h2,
+  .candidate-detail-page h2,
+  .election-detail-page h2 {
+    font-size: 19px !important;
+    line-height: 1.24 !important;
+  }
+
+  .app-main h3,
+  .election-option h3,
+  .candidate-card h3,
+  .vote-card h3 {
+    font-size: 16px !important;
+    line-height: 1.28 !important;
+  }
+
+  .app-main p,
+  .app-main span,
+  .app-main b,
+  .app-main strong,
+  .app-main small,
+  .app-main label,
+  .management-header p,
+  .content-page-header p,
+  .success-page p,
+  .page-intro p,
+  .detail-info-grid p,
+  .detail-description,
+  .candidate-summary-card p,
+  .candidate-summary-card small,
+  .candidate-data-grid p,
+  .candidate-data-grid label,
+  .election-detail-card p,
+  .result-detail-page .table-card th,
+  .result-detail-page .table-card td,
+  .table-card td,
+  .table-card th {
+    font-size: 14px !important;
+    line-height: 1.42 !important;
+  }
+
+  .table-card td::before {
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+  }
+
+  .primary-button,
+  .primary-action-button,
+  .secondary-button,
+  .danger-button,
+  .filter-button,
+  .mode-tab,
+  .pagination-edge,
+  .pagination-page,
+  .notification-actions button {
+    min-height: 40px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    border-radius: 10px !important;
+  }
+
+  .form-field span,
+  .form-field input,
+  .form-field select,
+  .form-field textarea,
+  .filter-field input,
+  .filter-field select,
+  .toolbar-search input,
+  .searchable-select-trigger,
+  .searchable-select-option {
+    font-size: 14px !important;
+  }
+
+  .form-field input,
+  .form-field select,
+  .filter-field,
+  .toolbar-search,
+  .searchable-select-trigger {
+    min-height: 44px !important;
+    height: auto !important;
+  }
+
+  .form-field input,
+  .form-field select,
+  .form-field textarea,
+  .searchable-select-trigger {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .management-form-card,
+  .filters-panel,
+  .settings-card,
+  .election-detail-card,
+  .partial-results-card,
+  .notification-card,
+  .simple-panel,
+  .form-page {
+    padding: 14px !important;
+  }
+
+  .stat-card span,
+  .result-stat-card span {
+    font-size: 13px !important;
+  }
+
+  .stat-card strong,
+  .result-stat-card strong {
+    font-size: 24px !important;
+  }
+
+  .auth-shell {
+    min-height: 100dvh !important;
+    padding: 18px 14px !important;
+  }
+
+  .auth-brand-panel h1,
+  .auth-copy h2 {
+    font-size: 22px !important;
+    line-height: 1.18 !important;
+  }
+
+  .auth-copy p,
+  .auth-row a,
+  .auth-link-row a,
+  .cancel-link,
+  .check-field {
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-main {
+    padding: 10px !important;
+  }
+
+  .app-main h1,
+  .management-header h1,
+  .content-page-header h1,
+  .form-page h1,
+  .success-page h1,
+  .page-intro h1,
+  .readable-detail-page .management-header h1,
+  .result-detail-page .management-header h1,
+  .candidate-detail-page .management-header h1,
+  .election-detail-page .management-header h1 {
+    font-size: 20px !important;
+  }
+
+  .app-main h2,
+  .management-form-card h2,
+  .settings-card h2,
+  .section-title-row h2,
+  .election-form-card h2,
+  .candidate-form-card h2,
+  .organ-form-card h2,
+  .roles-panel h2 {
+    font-size: 18px !important;
+  }
+
+  .app-main p,
+  .app-main span,
+  .app-main b,
+  .app-main strong,
+  .app-main small,
+  .app-main label,
+  .table-card td,
+  .table-card th {
+    font-size: 13px !important;
+  }
+}

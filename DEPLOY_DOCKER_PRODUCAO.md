@@ -9,6 +9,8 @@ cp .env.production.example .env.production
 cp ademo-eleitoral-backend/.env.production.example ademo-eleitoral-backend/.env.production
 ```
 
+
+
 Depois altere obrigatoriamente:
 
 - `POSTGRES_PASSWORD`

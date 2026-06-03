@@ -6,6 +6,15 @@ use Illuminate\Validation\Rule;
 
 class UserRequest extends ApiFormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('name')) {
+            $this->merge([
+                'name' => $this->uppercaseName($this->input('name')),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
@@ -22,7 +31,7 @@ class UserRequest extends ApiFormRequest
         }
 
         return [
-            'name' => [$required, 'string', 'max:150'],
+            'name' => [$required, 'string', 'max:150', 'regex:/^\s*\S+\s+\S+.*$/u'],
             'access_code' => [$required, 'string', 'max:50', Rule::unique('users', 'access_code')->ignore($this->routeId())],
             'email' => $emailRules,
             'phone' => $phoneRules,
@@ -49,6 +58,16 @@ class UserRequest extends ApiFormRequest
             'role.required' => 'Seleccione o perfil do utilizador.',
             'role.in' => 'O perfil seleccionado não é válido.',
             'name.required' => 'Informe o nome do utilizador.',
+            'name.regex' => 'Informe o nome completo do utilizador, com pelo menos duas palavras.',
         ];
+    }
+
+    private function uppercaseName(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        return mb_strtoupper(preg_replace('/\s+/u', ' ', trim($value)), 'UTF-8');
     }
 }

@@ -8,7 +8,7 @@ import { delegationService } from '../../services/delegationService'
 import { electionService } from '../../services/electionService'
 import { useAuth } from '../../hooks/useAuth'
 import { notify } from '../../utils/notify'
-import { normalizeId, onlyActive, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { commonStatusClass, normalizeId, onlyActive, searchText as normalizeSearchText } from '../../utils/statusFilters'
 
 const roleLabel = (role) => ({
   COMISSAO: 'Comissão',
@@ -153,7 +153,7 @@ export default function ElectionTeamPage() {
                       <td>{member.delegation}</td>
                       <td>{member.email}</td>
                       <td>{member.createdAt}</td>
-                      <td><span className="status-pill"><span></span>{member.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(member.rawStatus ?? member.status)}`}><span></span>{member.status}</span></td>
                       <td>
                         <RowActions
                           canManage={canManage}

@@ -16,7 +16,7 @@ const STATUS_FILTERS = [
   { label: "Programada", value: "PROGRAMADA" },
   { label: "Em votação", value: "EM_VOTACAO" },
   { label: "Concluída", value: "CONCLUIDA" },
-  { label: "Resultados publicados", value: "RESULTADOS_PUBLICADOS" },
+  // { label: "Resultados publicados", value: "RESULTADOS_PUBLICADOS" },
   { label: "Participei", value: "PARTICIPEI" },
 ];
 
@@ -24,7 +24,7 @@ const statusLabel = (status) => ({
   PROGRAMADA: "Programada",
   EM_VOTACAO: "Em votação",
   CONCLUIDA: "Concluída",
-  RESULTADOS_PUBLICADOS: "Resultados publicados",
+  // RESULTADOS_PUBLICADOS: "Resultados publicados",
 }[status] ?? status);
 
 const formatPeriod = (election) => {
@@ -89,24 +89,26 @@ export default function MyElectionsPage() {
           />
         </div>
 
-        <div className="status-filter-buttons">
-          <button
-            className={`filter-button ${statusFilter === "all" ? "active" : ""}`}
-            onClick={() => setStatusFilter("all")}
-            type="button"
-          >
-            Todas
-          </button>
-          {STATUS_FILTERS.map((filter) => (
+        <div className="status-filter-scroll" role="region" aria-label="Estados das eleições">
+          <div className="status-filter-buttons">
             <button
-              key={filter.value}
-              className={`filter-button ${statusFilter === filter.value ? "active" : ""}`}
-              onClick={() => setStatusFilter(filter.value)}
+              className={`filter-button ${statusFilter === "all" ? "active" : ""}`}
+              onClick={() => setStatusFilter("all")}
               type="button"
             >
-              {filter.label}
+              Todas
             </button>
-          ))}
+            {STATUS_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                className={`filter-button ${statusFilter === filter.value ? "active" : ""}`}
+                onClick={() => setStatusFilter(filter.value)}
+                type="button"
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -139,10 +141,10 @@ export default function MyElectionsPage() {
                 <Info size={18} />
                 Ver detalhes
               </Link>
-              <Link className="secondary-button" to={`/portal-eleitor/resultados?eleicao=${election.id}`}>
+              {/* <Link className="secondary-button" to={`/portal-eleitor/resultados?eleicao=${election.id}`}>
                 <BarChart3 size={18} />
                 Resultados
-              </Link>
+              </Link> */}
             </div>
           </article>
         ))}

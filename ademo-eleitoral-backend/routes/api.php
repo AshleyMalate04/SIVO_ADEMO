@@ -22,10 +22,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', fn () => \App\Support\ApiResponse::success(['status' => 'ok'], 'API operacional.'));
 
 Route::prefix('auth')->group(function (): void {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/verify-code', [AuthController::class, 'verifyCode']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+    Route::post('/verify-code', [AuthController::class, 'verifyCode'])->middleware('throttle:10,1');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
 
     Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout']);
@@ -89,6 +89,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     Route::middleware('role:COMISSAO,COMMISSION')->group(function (): void {
         Route::post('/elections', [ElectionController::class, 'store']);
         Route::put('/elections/{id}', [ElectionController::class, 'update']);
+        Route::delete('/elections/{id}', [ElectionController::class, 'destroy']);
         Route::patch('/elections/{id}/status', [ElectionController::class, 'updateStatus']);
         Route::post('/elections/{id}/team', [ElectionController::class, 'team']);
         Route::patch('/elections/{id}/team/{userId}/status', [ElectionController::class, 'updateTeamStatus']);
@@ -108,8 +109,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     // Route::get('/candidates/{id}', [CandidateController::class, 'show']);
 
     Route::get('/candidates', [CandidateController::class, 'index']);
-Route::get('/elections/{id}/candidates', [CandidateController::class, 'byElection']);
-Route::get('/candidates/{id}', [CandidateController::class, 'show']);
+    Route::get('/elections/{id}/candidates', [CandidateController::class, 'byElection']);
+    Route::get('/candidates/{id}', [CandidateController::class, 'show']);
 
     Route::middleware('role:ELEITOR,VOTER')->group(function (): void {
         Route::get('/voting/elections', [VotingController::class, 'elections']);

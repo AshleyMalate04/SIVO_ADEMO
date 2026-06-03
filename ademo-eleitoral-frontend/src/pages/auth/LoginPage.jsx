@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import FeedbackCard from "../../components/common/FeedbackCard";
@@ -20,16 +20,6 @@ export default function LoginPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [accessibility] = useState(
-    () => localStorage.getItem("ademo-accessibility") === "true",
-  );
-
-  useEffect(() => {
-    localStorage.setItem("ademo-accessibility", String(accessibility));
-    document.documentElement.dataset.accessibility = accessibility
-      ? "true"
-      : "false";
-  }, [accessibility]);
 
   function updateField(event) {
     const { checked, name, type, value } = event.target;

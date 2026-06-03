@@ -5,6 +5,7 @@ import FormError from "../../components/common/FormError";
 import Loading from "../../components/common/Loading";
 import VoteConfirmModal from "../../components/voting/VoteConfirmModal";
 import { voteService } from "../../services/voteService";
+import { resolveAssetUrl } from "../../utils/assetUrl";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { notify } from "../../utils/notify";
 
@@ -42,7 +43,7 @@ export default function BallotPage() {
             id: candidate.id,
             name: candidate.member?.name ?? "Sem nome",
             delegation: candidate.member?.delegation?.name ?? "Sem delegação",
-            photo: candidate.photo_path || "",
+            photo: resolveAssetUrl(candidate.photo_url || candidate.photo_path),
             isBlank: false,
           })),
           ...(data.election?.allow_blank_vote ? [{ id: "blank", name: "Voto em branco", delegation: "Sem escolha de candidato", photo: "", isBlank: true }] : []),

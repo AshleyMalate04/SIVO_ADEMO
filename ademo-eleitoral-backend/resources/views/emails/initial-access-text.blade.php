@@ -7,8 +7,8 @@ Palavra-passe inicial: {{ $initialPassword }}
 
 Aceda à plataforma pelo endereço:
 {{ $loginUrl }}
-
-Após entrar, aceda às configurações para alterar a sua palavra-passe.
+{{-- 
+Após entrar, aceda às configurações para alterar a sua palavra-passe. --}}
 
 Atenciosamente,
 Equipa ADEMO Eleitoral

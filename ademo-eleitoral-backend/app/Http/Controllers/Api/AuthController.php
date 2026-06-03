@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Mail\PasswordResetCodeMail;
 use App\Models\User;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use App\Support\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -36,20 +38,20 @@ class AuthController extends Controller
         AuditService::record($request, 'LOGIN', 'User', $user->id);
 
         return ApiResponse::success([
-                'token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'access_code' => $user->access_code,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'status' => $user->status,
-                    'must_change_password' => $user->password_changed_at === null,
-                ],
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'access_code' => $user->access_code,
+                'email' => $user->email,
                 'role' => $user->role,
-                'redirect_to' => $this->redirectByRole($user->role),
-                'menu' => $this->menuByRole($user->role),
+                'status' => $user->status,
+                'must_change_password' => $user->password_changed_at === null,
             ],
+            'role' => $user->role,
+            'redirect_to' => $this->redirectByRole($user->role),
+            'menu' => $this->menuByRole($user->role),
+        ],
             'Autenticação realizada com sucesso.'
         );
     }
@@ -101,14 +103,9 @@ class AuthController extends Controller
             ]
         );
 
-        $resetUrl = rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/') . '/verificar-codigo?email=' . urlencode($user->email) . '&code=' . urlencode($code);
+        $resetUrl = rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/').'/verificar-codigo?email='.urlencode($user->email).'&code='.urlencode($code);
 
-        Mail::html($this->passwordResetEmailHtml($user->name, $code, $resetUrl), function ($message) use ($user): void {
-            $message
-                ->from(config('mail.from.address'), config('mail.from.name'))
-                ->to($user->email, $user->name)
-                ->subject('Código de verificação para redefinir palavra-passe - ADEMO');
-        });
+        Mail::to($user->email, $user->name)->queue(new PasswordResetCodeMail($user, $code, $resetUrl));
 
         return ApiResponse::success(
             [
@@ -144,7 +141,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'email'],
             'code' => ['required', 'digits:6'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         $user = User::where('email', $validated['email'])->first();
@@ -161,48 +158,9 @@ class AuthController extends Controller
         $user->tokens()->delete();
 
         DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
+        app(NotificationService::class)->notifyPasswordChanged($user->fresh());
 
         return ApiResponse::success(null, 'Senha actualizada com sucesso.');
-    }
-
-    private function passwordResetEmailHtml(string $name, string $code, string $resetUrl): string
-    {
-        $safeName = e($name);
-        $safeCode = e($code);
-        $safeResetUrl = e($resetUrl);
-
-        return <<<HTML
-<!doctype html>
-<html lang="pt">
-<body style="margin:0;background:#f5f7fb;color:#172033;font-family:Arial,Helvetica,sans-serif;">
-  <div style="max-width:640px;margin:0 auto;padding:32px 18px;">
-    <div style="background:#ffffff;border:1px solid #e5e9f2;border-radius:8px;padding:28px;">
-      <p style="margin:0 0 18px;">Olá, {$safeName}</p>
-
-      <p style="margin:0 0 18px;">Recebemos um pedido para redefinir a sua palavra-passe no sistema eleitoral ADEMO.</p>
-
-      <p style="margin:0 0 18px;">Utilize o código de verificação abaixo para confirmar a sua identidade:</p>
-
-      <p style="margin:0 0 18px;font-size:18px;">Código de verificação: <strong style="font-size:24px;letter-spacing:3px;">{$safeCode}</strong></p>
-
-      <p style="margin:0 0 18px;">Este código é válido por apenas 15 minutos.</p>
-
-      <p style="margin:0 0 18px;">Também pode redefinir a sua palavra-passe através do link abaixo:</p>
-
-      <p style="margin:0 0 22px;">
-        <a href="{$safeResetUrl}" style="display:inline-block;background:#b91c1c;color:#ffffff;text-decoration:none;border-radius:6px;padding:12px 18px;font-weight:700;">Redefinir palavra-passe</a>
-      </p>
-
-      <p style="margin:0 0 18px;">Por motivos de segurança, o link e o código expiram após 15 minutos.</p>
-
-      <p style="margin:0 0 18px;">Caso não tenha solicitado esta alteração, ignore este email.</p>
-
-      <p style="margin:0;">Atenciosamente,<br>Equipa ADEMO Eleitoral</p>
-    </div>
-  </div>
-</body>
-</html>
-HTML;
     }
 
     private function validResetCode(string $code, object $token): bool
@@ -278,7 +236,6 @@ HTML;
             'VOTER', 'ELEITOR' => [
                 'elections',
                 'results',
-                'notifications',
                 'settings',
             ],
             default => [],

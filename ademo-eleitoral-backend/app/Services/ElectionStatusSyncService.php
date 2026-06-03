@@ -8,9 +8,7 @@ use Illuminate\Support\Carbon;
 
 class ElectionStatusSyncService
 {
-    public function __construct(private readonly NotificationService $notificationService)
-    {
-    }
+    public function __construct(private readonly NotificationService $notificationService) {}
 
     public function sync(): int
     {
@@ -18,7 +16,13 @@ class ElectionStatusSyncService
         $updated = 0;
 
         Election::query()
-            ->where('status', '!=', 'RESULTADOS_PUBLICADOS')
+            ->where(function ($query) use ($now): void {
+                $query
+                    ->where(function ($query) use ($now): void {
+                        $query->where('status', 'PROGRAMADA')->where('starts_at', '<=', $now);
+                    })
+                    ->orWhere('status', 'EM_VOTACAO');
+            })
             ->get()
             ->each(function (Election $election) use ($now, &$updated): void {
                 $startsAt = $election->starts_at ? Carbon::parse($election->starts_at, config('app.timezone', 'Africa/Maputo')) : null;
@@ -44,11 +48,19 @@ class ElectionStatusSyncService
                     $updated++;
                 }
 
-                if ($status === 'EM_VOTACAO' && $endsAt && $now->between($endsAt->copy()->subHours(2), $endsAt)) {
+                if ($status === 'EM_VOTACAO' && $startsAt && $endsAt && $this->shouldNotifyEndingSoon($startsAt, $endsAt, $now)) {
                     $this->notificationService->notifyElectionEndingSoon($election);
                 }
             });
 
         return $updated;
+    }
+
+    private function shouldNotifyEndingSoon(Carbon $startsAt, Carbon $endsAt, Carbon $now): bool
+    {
+        $durationInMinutes = max(1, (int) $startsAt->diffInMinutes($endsAt));
+        $warningMinutes = $durationInMinutes > 30 ? 30 : 15;
+
+        return $now->between($endsAt->copy()->subMinutes($warningMinutes), $endsAt);
     }
 }

@@ -32,7 +32,6 @@ import VoteSuccessPage from "../pages/voting/VoteSuccessPage";
 import ResultsPage from "../pages/results/ResultsPage";
 import ResultDetailsPage from "../pages/results/ResultDetailsPage";
 import AuditPage from "../pages/audit/AuditPage";
-import NotificationsPage from "../pages/notifications/NotificationsPage";
 import SettingsPage from "../pages/settings/SettingsPage";
 import UnauthorizedPage from "../pages/errors/UnauthorizedPage";
 import ProtectedRoute from "./ProtectedRoute";
@@ -121,7 +120,6 @@ export default function AppRoutes() {
             <Route path="/auditoria" element={guarded(<AuditPage />, ["ADMIN", "FISCAL"])} />
             <Route path="/auditoria/eleicoes" element={guarded(<ElectionSelectionPage mode="audit" />, ["ADMIN", "FISCAL", "COMISSAO", "COMMISSION"])} />
 
-            <Route path="/notificacoes" element={guarded(<NotificationsPage />, VOTER)} />
             <Route path="/configuracoes" element={guarded(<SettingsPage />, EVERYONE)} />
           </Route>
         </Route>

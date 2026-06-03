@@ -3,7 +3,9 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, FileText, Mail, MapPin, Phone, UserRound, X } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import { candidateService } from '../../services/candidateService'
+import { resolveAssetUrl } from '../../utils/assetUrl'
 import { notify } from '../../utils/notify'
+import { commonStatusClass } from '../../utils/statusFilters'
 
 const statusLabel = (status) => ({
   APPROVED: 'Candidatura aprovada',
@@ -27,8 +29,8 @@ export default function CandidateProfilePage() {
   }, [candidateId])
 
   const backTo = useMemo(() => (eleicaoId ? `/portal-eleitor/votacoes/${eleicaoId}` : '/candidatos'), [eleicaoId])
-  const photoUrl = candidate?.photo_url || candidate?.photo_path || ''
-  const documentUrl = candidate?.document_url || candidate?.document_path || ''
+  const photoUrl = resolveAssetUrl(candidate?.photo_url || candidate?.photo_path)
+  const documentUrl = resolveAssetUrl(candidate?.document_url || candidate?.document_path)
   const hasDocument = Boolean(documentUrl)
 
   const openDocument = () => {
@@ -71,8 +73,8 @@ export default function CandidateProfilePage() {
             {photoUrl ? <img src={photoUrl} alt={`Fotografia de ${candidate.member?.name ?? 'candidato'}`} /> : <UserRound size={82} />}
           </button>
           <h2>{candidate.member?.name ?? 'Sem nome'}</h2>
-          <p>{candidate.position?.name ?? 'Sem cargo'}</p>
-          <span className="status-pill published"><span></span>{statusLabel(candidate.status)}</span>
+          <p>{candidate.member?.delegation?.name ?? 'Sem delegação'}</p>
+          <span className={`status-pill ${commonStatusClass(candidate.status)}`}><span></span>{statusLabel(candidate.status)}</span>
         </aside>
 
         <article className="candidate-data-card">

@@ -9,7 +9,7 @@ import { electionService } from '../../services/electionService'
 import { useAuth } from '../../hooks/useAuth'
 import { notify } from '../../utils/notify'
 import { canCreateResource, canManageResource, canMutateStatus } from '../../utils/rolePermissions'
-import { normalizeId, normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { commonStatusClass, normalizeId, normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
 
 const statusLabel = (status) => ({
   APPROVED: 'Aprovado',
@@ -187,7 +187,7 @@ export default function ElectionCandidatesPage() {
                       <td>{candidate.organ}</td>
                       <td>{candidate.position}</td>
                       <td>{candidate.election}</td>
-                      <td><span className="status-pill"><span></span>{candidate.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(candidate.rawStatus ?? candidate.status)}`}><span></span>{candidate.status}</span></td>
                       <td>
                         <RowActions
                           canManage={canManage}

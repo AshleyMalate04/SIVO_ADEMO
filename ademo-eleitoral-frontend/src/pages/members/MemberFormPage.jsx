@@ -6,6 +6,9 @@ import { getApiErrorMessage } from '../../utils/apiError'
 import { notify } from '../../utils/notify'
 import { onlyActive } from '../../utils/statusFilters'
 
+const uppercaseName = (value) => value.replace(/\s+/g, ' ').toLocaleUpperCase('pt-PT')
+const hasTwoWords = (value) => value.trim().split(/\s+/).length >= 2
+
 export default function MemberFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -31,7 +34,7 @@ export default function MemberFormPage() {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const payload = {
-      name: formData.get('name')?.trim(),
+      name: uppercaseName(formData.get('name')?.trim() || ''),
       member_code: formData.get('member_code')?.trim(),
       delegation_id: formData.get('delegation_id') ? Number(formData.get('delegation_id')) : null,
       phone: formData.get('phone')?.trim() || null,
@@ -42,6 +45,11 @@ export default function MemberFormPage() {
 
     if (!payload.name || !payload.member_code || !payload.delegation_id || !payload.phone || !payload.bi_number) {
       notify.error('Campos obrigatórios.', 'Preencha todos os campos obrigatórios. Apenas o email é opcional.')
+      return
+    }
+
+    if (!hasTwoWords(payload.name)) {
+      notify.error('Nome incompleto.', 'Informe o nome completo do membro, com pelo menos duas palavras.')
       return
     }
 
@@ -89,7 +97,7 @@ export default function MemberFormPage() {
         <div className="form-grid two-columns">
           <label className="form-field">
             <span>Nome</span>
-            <input name="name" required defaultValue={member?.name ?? ''} />
+            <input name="name" required defaultValue={member?.name ?? ''} onInput={(event) => { event.currentTarget.value = uppercaseName(event.currentTarget.value) }} />
           </label>
           <label className="form-field">
             <span>Código de membro</span>

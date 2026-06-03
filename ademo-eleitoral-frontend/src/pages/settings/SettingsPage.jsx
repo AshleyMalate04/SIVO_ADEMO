@@ -1,15 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
-import { Eye, EyeOff, ShieldCheck, Type } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import RequiredLabel from '../../components/common/RequiredLabel'
 import { settingService } from '../../services/settingService'
 import { notify } from '../../utils/notify'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { getAuthMenu, getAuthToken, getAuthUser, saveAuthData } from '../../lib/storage'
-
-const updatePreference = (key, value) => {
-  localStorage.setItem(key, value)
-  window.dispatchEvent(new Event('ademo-preferences-change'))
-}
 
 function PasswordField({ label, name }) {
   const [visible, setVisible] = useState(false)
@@ -31,11 +26,6 @@ export default function SettingsPage() {
   const passwordToastId = 'settings-password-update'
   const submitLockRef = useRef(false)
   const [isSavingPassword, setIsSavingPassword] = useState(false)
-  const [accessibilityEnabled, setAccessibilityEnabled] = useState(() => localStorage.getItem('ademo-accessibility') === 'true')
-
-  useEffect(() => {
-    updatePreference('ademo-accessibility', String(accessibilityEnabled))
-  }, [accessibilityEnabled])
 
   const handlePasswordSubmit = async (event) => {
     event.preventDefault()
@@ -49,19 +39,19 @@ export default function SettingsPage() {
     const confirmPassword = String(formData.get('password_confirmation') || '')
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      notify.error('Campos obrigatórios.', 'Preencha a palavra-passe actual, a nova palavra-passe e a confirmação.', { id: passwordToastId })
+      notify.error('Campos obrigatorios.', 'Preencha a palavra-passe actual, a nova palavra-passe e a confirmacao.', { id: passwordToastId })
       submitLockRef.current = false
       return
     }
 
     if (newPassword.length < 8) {
-      notify.error('Palavra-passe inválida.', 'A nova palavra-passe deve ter pelo menos 8 caracteres.', { id: passwordToastId })
+      notify.error('Palavra-passe invalida.', 'A nova palavra-passe deve ter pelo menos 8 caracteres.', { id: passwordToastId })
       submitLockRef.current = false
       return
     }
 
     if (newPassword !== confirmPassword) {
-      notify.error('Confirmação inválida.', 'A confirmação deve ser igual à nova palavra-passe.', { id: passwordToastId })
+      notify.error('Confirmacao invalida.', 'A confirmacao deve ser igual a nova palavra-passe.', { id: passwordToastId })
       submitLockRef.current = false
       return
     }
@@ -81,11 +71,11 @@ export default function SettingsPage() {
           menu: getAuthMenu(),
         })
       }
-      notify.success('Palavra-passe actualizada com sucesso.', 'A alteração foi guardada na base de dados.', { id: passwordToastId })
+      notify.success('Palavra-passe actualizada com sucesso.', 'A alteracao foi guardada na base de dados.', { id: passwordToastId })
       form.reset()
     } catch (error) {
       const message = getApiErrorMessage(error)
-      notify.error('Palavra-passe não actualizada.', message, { id: passwordToastId })
+      notify.error('Palavra-passe nao actualizada.', message, { id: passwordToastId })
     } finally {
       setIsSavingPassword(false)
       submitLockRef.current = false
@@ -95,15 +85,15 @@ export default function SettingsPage() {
   return (
     <section className="management-page settings-page">
       <header className="management-header">
-        <h1>Configurações</h1>
-        <p>Altere a palavra-passe e active opções de acessibilidade.</p>
+        <h1>Configuracoes</h1>
+        <p>Altere a palavra-passe da sua conta.</p>
       </header>
 
-      <section className="settings-grid settings-compact-grid">
+      <section className="settings-grid settings-compact-grid settings-password-only">
         <form className="settings-card" onSubmit={handlePasswordSubmit} noValidate>
           <div className="settings-card-header">
             <div>
-              <h2>Segurança da conta</h2>
+              <h2>Seguranca da conta</h2>
               <p>Use uma palavra-passe forte e diferente da palavra-passe anterior.</p>
             </div>
             <ShieldCheck size={22} />
@@ -119,22 +109,6 @@ export default function SettingsPage() {
             </button>
           </div>
         </form>
-
-        <section className="settings-card settings-preferences">
-          <div className="settings-card-header">
-            <div>
-              <h2>Acessibilidade</h2>
-              <p>Melhore contraste e conforto de leitura.</p>
-            </div>
-            <label className="toggle-switch" title="Acessibilidade">
-              <input checked={accessibilityEnabled} type="checkbox" onChange={() => setAccessibilityEnabled((current) => !current)} />
-              <span></span>
-            </label>
-          </div>
-          <p className="settings-state-text">
-            <Type size={16} /> {accessibilityEnabled ? 'Acessibilidade activa' : 'Acessibilidade desactivada'}
-          </p>
-        </section>
       </section>
     </section>
   )

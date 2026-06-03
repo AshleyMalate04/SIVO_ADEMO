@@ -60,7 +60,11 @@ class ResultController extends Controller
 
             $query->whereIn('id', $voters->keys());
 
-            $results = $query->orderByDesc('starts_at')->get()->map(function (Election $election) use ($voters, $member) {
+            $results = $query->orderByDesc('starts_at')->get()->filter(function (Election $election) use ($voters) {
+                $voter = $voters->get($election->id);
+
+                return (bool) ($voter?->has_voted ?? false) || $election->status === 'RESULTADOS_PUBLICADOS';
+            })->values()->map(function (Election $election) use ($voters, $member) {
                 $voter = $voters->get($election->id);
                 $election->setAttribute('is_authorized_voter', true);
                 $election->setAttribute('member_id', $member->id);
@@ -99,15 +103,19 @@ class ResultController extends Controller
 
         if ($user?->isVoter()) {
             $member = $this->memberForUser($request);
-            $isAuthorized = $member
+            $voter = $member
                 ? ElectionVoter::where('election_id', $electionId)
                     ->where('member_id', $member->id)
                     ->where('status', 'AUTHORIZED')
-                    ->exists()
-                : false;
+                    ->first()
+                : null;
 
-            if (! $isAuthorized) {
+            if (! $voter) {
                 abort(403, 'Você não está autorizado a consultar resultados desta eleição.');
+            }
+
+            if (! $voter->has_voted && $election->status !== 'RESULTADOS_PUBLICADOS') {
+                abort(403, 'Os resultados desta eleição ficam disponíveis após votar ou depois da publicação final.');
             }
         }
 

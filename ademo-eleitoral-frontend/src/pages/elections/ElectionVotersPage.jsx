@@ -10,7 +10,7 @@ import { voterService } from '../../services/voterService'
 import { useAuth } from '../../hooks/useAuth'
 import { notify } from '../../utils/notify'
 import { canCreateResource, canManageResource, canMutateStatus } from '../../utils/rolePermissions'
-import { normalizeId, normalizeStatus, onlyActive, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { commonStatusClass, normalizeId, normalizeStatus, onlyActive, searchText as normalizeSearchText } from '../../utils/statusFilters'
 
 const statusLabel = (status) => ({
   AUTHORIZED: 'Autorizado',
@@ -183,7 +183,7 @@ export default function ElectionVotersPage() {
                       <td>{voter.election}</td>
                       <td>{voter.contact}</td>
                       <td>{voter.voted}</td>
-                      <td><span className="status-pill"><span></span>{voter.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(voter.rawStatus)}`}><span></span>{voter.status}</span></td>
                       <td>
                         <RowActions
                           canManage={canManage}

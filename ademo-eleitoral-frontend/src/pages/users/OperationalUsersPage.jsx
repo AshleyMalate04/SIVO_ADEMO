@@ -6,7 +6,7 @@ import PaginationLayout from '../../components/common/PaginationLayout'
 import RowActions from '../../components/common/RowActions'
 import { useAuth } from '../../hooks/useAuth'
 import { userService } from '../../services/userService'
-import { normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { commonStatusClass, normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
 import { notify } from '../../utils/notify'
 import { canCreateResource, canManageResource, canMutateStatus } from '../../utils/rolePermissions'
 
@@ -157,7 +157,7 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
                       <td>{user.delegation}</td>
                       <td>{user.email}</td>
                       <td>{user.role}</td>
-                      <td><span className="status-pill"><span></span>{user.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(user.rawStatus ?? user.status)}`}><span></span>{user.status}</span></td>
                       {isStaffManagement ? (
                         <td>
                           <RowActions

@@ -29,4 +29,13 @@ class CandidateRequest extends ApiFormRequest
             'status' => ['sometimes', Rule::in(['APPROVED', 'REJECTED', 'SUSPENDED'])],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'photo_file.max' => 'A fotografia do candidato deve ter no máximo 4 MB.',
+            'photo_file.image' => 'A fotografia do candidato deve ser uma imagem válida.',
+            'photo_file.required_without' => 'Seleccione a fotografia do candidato.',
+        ];
+    }
 }

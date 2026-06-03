@@ -32,6 +32,11 @@ export const electionService = {
     return unwrap(response)
   },
 
+  async remove(id) {
+    const response = await api.delete(`/elections/${id}`)
+    return unwrap(response)
+  },
+
   async saveTeam(id, users) {
     const response = await api.post(`/elections/${id}/team`, { users })
     return unwrap(response)

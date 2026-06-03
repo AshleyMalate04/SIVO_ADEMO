@@ -5,6 +5,7 @@ import Loading from '../../components/common/Loading'
 import { candidateService } from '../../services/candidateService'
 import { electionService } from '../../services/electionService'
 import { memberService } from '../../services/memberService'
+import { resolveAssetUrl } from '../../utils/assetUrl'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { notify } from '../../utils/notify'
 import { normalizeId } from '../../utils/statusFilters'
@@ -46,7 +47,7 @@ export default function ElectionCandidateFormPage() {
           })
           setPhotoName(candidate.photo_path ?? '')
           setDocumentName(candidate.document_path ?? '')
-          if (candidate.photo_url || candidate.photo_path) setPhotoPreview(candidate.photo_url || candidate.photo_path)
+          if (candidate.photo_url || candidate.photo_path) setPhotoPreview(resolveAssetUrl(candidate.photo_url || candidate.photo_path))
         } else {
           setForm((current) => ({ ...current, election_id: programmadas[0]?.id ? String(programmadas[0].id) : '' }))
         }
@@ -62,6 +63,15 @@ export default function ElectionCandidateFormPage() {
 
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0] ?? null
+    if (file && file.size > 4 * 1024 * 1024) {
+      event.target.value = ''
+      setPhotoFile(null)
+      setPhotoName('')
+      setPhotoPreview('')
+      notify.error('Fotografia demasiado grande.', 'A imagem do candidato deve ter no máximo 4 MB.')
+      return
+    }
+
     setPhotoFile(file)
     setPhotoName(file?.name || '')
     setPhotoPreview(file ? URL.createObjectURL(file) : '')

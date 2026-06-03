@@ -11,6 +11,7 @@ use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class UserController extends CrudController
 {
@@ -44,7 +45,9 @@ class UserController extends CrudController
             });
         }
 
-        $sortBy = $request->string('sort_by', 'id')->toString();
+        $sortBy = in_array($request->string('sort_by', 'id')->toString(), Schema::getColumnListing('users'), true)
+            ? $request->string('sort_by', 'id')->toString()
+            : 'id';
         $sortDirection = $request->string('sort_direction', 'desc')->toString() === 'asc' ? 'asc' : 'desc';
         $perPage = min((int) $request->integer('per_page', 15), 100);
 

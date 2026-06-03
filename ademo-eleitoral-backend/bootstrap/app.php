@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../app/Console/Commands',
     ])
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('elections:sync-statuses')->everyMinute();
+        $schedule->command('elections:sync-statuses')->everyMinute()->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\EnsureUtf8Encoding::class);

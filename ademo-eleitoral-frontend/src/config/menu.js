@@ -1,7 +1,6 @@
 import {
   BadgeCheck,
   BarChart3,
-  Bell,
   Building2,
   CalendarDays,
   CheckSquare,
@@ -111,13 +110,6 @@ export const menuItems = [
     path: "/auditoria",
     icon: FileText,
     roles: ["ADMIN", "FISCAL"],
-  },
-  {
-    key: "notifications",
-    label: "Notificações",
-    path: "/notificacoes",
-    icon: Bell,
-    roles: ["ELEITOR", "VOTER"],
   },
   {
     key: "settings",
