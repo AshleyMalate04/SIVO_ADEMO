@@ -34,6 +34,7 @@ export default function BallotPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [failedPhotoIds, setFailedPhotoIds] = useState(() => new Set());
 
   useEffect(() => {
     voteService.ballot(eleicaoId)
@@ -49,6 +50,7 @@ export default function BallotPage() {
           ...(data.election?.allow_blank_vote ? [{ id: "blank", name: "Voto em branco", delegation: "Sem escolha de candidato", photo: "", isBlank: true }] : []),
         ];
         setPayload({ ...data, options });
+        setFailedPhotoIds(new Set());
         setRemainingSeconds(secondsUntil(data.election?.ends_at));
         if (data.has_voted) {
           notify.success("Voto já registado.", "Você já votou nesta eleição. O boletim fica apenas para consulta.");
@@ -60,6 +62,7 @@ export default function BallotPage() {
   }, [eleicaoId, selectedOption]);
 
   const selectedCandidate = payload?.options?.find((candidate) => String(candidate.id) === selectedOption);
+  const hasPhoto = (candidate) => Boolean(candidate.photo) && !failedPhotoIds.has(String(candidate.id));
 
   useEffect(() => {
     sessionStorage.setItem(storageKey, selectedOption);
@@ -155,7 +158,13 @@ export default function BallotPage() {
               <label className={selectedOption === String(candidate.id) ? "ballot-option selected" : "ballot-option"} key={candidate.id}>
                 <input checked={selectedOption === String(candidate.id)} name="candidate" onChange={() => { setSelectedOption(String(candidate.id)); setError(""); }} type="radio" />
                 <span className="candidate-photo">
-                  {candidate.photo ? <img src={candidate.photo} alt={candidate.name} /> : <b>{candidate.isBlank ? "VB" : candidate.name.slice(0, 2).toUpperCase()}</b>}
+                  {hasPhoto(candidate) ? (
+                    <img
+                      src={candidate.photo}
+                      alt={candidate.name}
+                      onError={() => setFailedPhotoIds((current) => new Set(current).add(String(candidate.id)))}
+                    />
+                  ) : <b>{candidate.isBlank ? "VB" : candidate.name.slice(0, 2).toUpperCase()}</b>}
                 </span>
                 <span className="candidate-ballot-info">
                   <strong>{candidate.name}</strong>

@@ -28,15 +28,15 @@ class Candidate extends Model
 
     public function getPhotoUrlAttribute(): ?string
     {
-        return $this->publicFileUrl($this->photo_path);
+        return $this->publicFileUrl($this->photo_path, 'candidate.photos.show');
     }
 
     public function getDocumentUrlAttribute(): ?string
     {
-        return $this->publicFileUrl($this->document_path);
+        return $this->publicFileUrl($this->document_path, 'candidate.documents.show');
     }
 
-    private function publicFileUrl(?string $path): ?string
+    private function publicFileUrl(?string $path, string $routeName): ?string
     {
         if (! $path) {
             return null;
@@ -46,7 +46,11 @@ class Candidate extends Model
             return $path;
         }
 
-        return url(Storage::url($path));
+        if ($this->exists && Storage::disk('public')->exists($path)) {
+            return route($routeName, $this);
+        }
+
+        return null;
     }
 
     public function election(): BelongsTo

@@ -18,6 +18,7 @@ export default function CandidateProfilePage() {
   const [loading, setLoading] = useState(true)
   const [candidate, setCandidate] = useState(null)
   const [showPhoto, setShowPhoto] = useState(false)
+  const [photoFailed, setPhotoFailed] = useState(false)
 
   useEffect(() => {
     if (!candidateId) return
@@ -30,8 +31,13 @@ export default function CandidateProfilePage() {
 
   const backTo = useMemo(() => (eleicaoId ? `/portal-eleitor/votacoes/${eleicaoId}` : '/candidatos'), [eleicaoId])
   const photoUrl = resolveAssetUrl(candidate?.photo_url || candidate?.photo_path)
+  const visiblePhotoUrl = photoFailed ? '' : photoUrl
   const documentUrl = resolveAssetUrl(candidate?.document_url || candidate?.document_path)
   const hasDocument = Boolean(documentUrl)
+
+  useEffect(() => {
+    setPhotoFailed(false)
+  }, [photoUrl])
 
   const openDocument = () => {
     if (!hasDocument) {
@@ -69,8 +75,17 @@ export default function CandidateProfilePage() {
 
       <section className="candidate-detail-grid">
         <aside className="candidate-profile-card">
-          <button className="candidate-avatar candidate-avatar-button" type="button" onClick={() => photoUrl && setShowPhoto(true)} disabled={!photoUrl} title={photoUrl ? 'Ver fotografia em tamanho maior' : 'Sem fotografia'}>
-            {photoUrl ? <img src={photoUrl} alt={`Fotografia de ${candidate.member?.name ?? 'candidato'}`} /> : <UserRound size={82} />}
+          <button className="candidate-avatar candidate-avatar-button" type="button" onClick={() => visiblePhotoUrl && setShowPhoto(true)} disabled={!visiblePhotoUrl} title={visiblePhotoUrl ? 'Ver fotografia em tamanho maior' : 'Sem fotografia'}>
+            {visiblePhotoUrl ? (
+              <img
+                src={visiblePhotoUrl}
+                alt={`Fotografia de ${candidate.member?.name ?? 'candidato'}`}
+                onError={() => {
+                  setPhotoFailed(true)
+                  setShowPhoto(false)
+                }}
+              />
+            ) : <UserRound size={82} />}
           </button>
           <h2>{candidate.member?.name ?? 'Sem nome'}</h2>
           <p>{candidate.member?.delegation?.name ?? 'Sem delegação'}</p>
@@ -92,10 +107,18 @@ export default function CandidateProfilePage() {
         </article>
       </section>
 
-      {showPhoto && photoUrl ? (
+      {showPhoto && visiblePhotoUrl ? (
         <div className="image-preview-backdrop" role="dialog" aria-modal="true" onClick={() => setShowPhoto(false)}>
           <button className="image-preview-close" type="button" onClick={() => setShowPhoto(false)} aria-label="Fechar imagem"><X size={22} /></button>
-          <img src={photoUrl} alt={`Fotografia de ${candidate.member?.name ?? 'candidato'}`} onClick={(event) => event.stopPropagation()} />
+          <img
+            src={visiblePhotoUrl}
+            alt={`Fotografia de ${candidate.member?.name ?? 'candidato'}`}
+            onClick={(event) => event.stopPropagation()}
+            onError={() => {
+              setPhotoFailed(true)
+              setShowPhoto(false)
+            }}
+          />
         </div>
       ) : null}
     </section>

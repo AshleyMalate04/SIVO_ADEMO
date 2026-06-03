@@ -14,6 +14,8 @@ const publicBaseUrl = (() => {
   }
 })()
 
+const publicAssetPrefixes = ['/storage/', '/candidate-photos/', '/candidate-documents/']
+
 export function resolveAssetUrl(path) {
   if (!path) return ''
 
@@ -28,7 +30,7 @@ export function resolveAssetUrl(path) {
       const apiUrl = new URL(apiBaseUrl || window.location.origin, window.location.origin)
       const pointsToLocalhostWithoutPort = ['localhost', '127.0.0.1'].includes(url.hostname) && !url.port
 
-      if (pointsToLocalhostWithoutPort && url.pathname.startsWith('/storage/')) {
+      if (pointsToLocalhostWithoutPort && publicAssetPrefixes.some((prefix) => url.pathname.startsWith(prefix))) {
         return `${apiUrl.origin}${url.pathname}`
       }
 
@@ -38,7 +40,7 @@ export function resolveAssetUrl(path) {
     }
   }
 
-  if (value.startsWith('/storage/')) {
+  if (publicAssetPrefixes.some((prefix) => value.startsWith(prefix))) {
     return `${publicBaseUrl}${value}`
   }
 

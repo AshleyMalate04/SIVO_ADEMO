@@ -1,109 +1,216 @@
 # Documento de Hospedagem - Sistema Eleitoral ADEMO
 
-Este documento explica como hospedar o Sistema Eleitoral ADEMO em produção.
+Este documento explica, passo a passo, como hospedar o Sistema Eleitoral ADEMO usando o projecto que esta no Git.
 
-## 1. Componentes do Sistema
+Existem dois cenarios:
 
-Para o sistema funcionar correctamente em produção, devem estar activos:
+1. Hospedagem inicial sem dominio, usando apenas o IP do servidor.
+2. Hospedagem final com dominio e SSL.
 
-- Backend Laravel.
-- Frontend React.
-- Base de dados PostgreSQL.
-- Queue Worker.
-- Scheduler Laravel.
-- Serviço de e-mail SMTP.
-- Reverb, caso seja usado tempo real.
+> Exemplo usado neste documento:
+>
+> - IP do servidor: `SEU_IP_DO_SERVIDOR`
+> - Pasta do projecto no servidor: `/var/www/ademo`
+> - Backend Laravel: `/var/www/ademo/ademo-eleitoral-backend`
+> - Frontend React: `/var/www/ademo/ademo-eleitoral-frontend`
+
+Substitua `SEU_IP_DO_SERVIDOR`, `seu-dominio.com`, `api.seu-dominio.com` e as senhas pelos seus dados reais.
+
+---
+
+## 1. Antes de Enviar Para o Servidor
+
+No seu computador local, confirme que todas as alteracoes estao no Git.
+
+```bash
+git status
+git add .
+git commit -m "Preparar sistema ADEMO para hospedagem"
+git push origin main
+```
+
+Se a branch principal nao for `main`, use o nome correcto, por exemplo:
+
+```bash
+git push origin master
+```
+
+Nao envie ficheiros `.env` reais para o Git. O servidor deve ter o seu proprio `.env`.
+
+---
 
 ## 2. Requisitos do Servidor
 
 Recomendado:
 
-- Ubuntu Server 22.04 ou superior.
-- Nginx ou Apache.
+- Ubuntu Server 22.04 ou 24.04.
+- Acesso SSH.
 - PHP 8.3 ou superior.
 - Composer.
 - Node.js 20 ou superior.
 - PostgreSQL 15 ou superior.
+- Nginx.
 - Supervisor.
-- Certificado SSL.
+- Servico SMTP real para envio de e-mails.
 
-Extensões PHP necessárias:
+Docker nao e obrigatorio. Use Docker apenas se quiser subir tudo por containers. Como actualmente o seu computador nao tem Docker instalado, este guia principal usa instalacao normal no servidor.
+
+---
+
+## 3. Entrar no Servidor
+
+No seu computador:
 
 ```bash
-php-pgsql
-php-mbstring
-php-xml
-php-curl
-php-zip
-php-bcmath
-php-intl
-php-cli
-php-fpm
+ssh root@SEU_IP_DO_SERVIDOR
 ```
 
-## 3. Estrutura Recomendada
+Actualizar o servidor:
 
-Exemplo no servidor:
+```bash
+apt update
+apt upgrade -y
+```
+
+Instalar dependencias:
+
+```bash
+apt install -y nginx git unzip curl supervisor postgresql postgresql-contrib
+apt install -y php php-fpm php-cli php-pgsql php-mbstring php-xml php-curl php-zip php-bcmath php-intl
+```
+
+Instalar Composer:
+
+```bash
+curl -sS https://getcomposer.org/installer -o composer-setup.php
+php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+composer --version
+```
+
+Instalar Node.js 20:
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+node -v
+npm -v
+```
+
+---
+
+## 4. Baixar o Projecto do Git
+
+Criar a pasta:
+
+```bash
+mkdir -p /var/www
+cd /var/www
+```
+
+Clonar o projecto:
+
+```bash
+git clone URL_DO_SEU_REPOSITORIO_GIT ademo
+```
+
+Entrar no projecto:
+
+```bash
+cd /var/www/ademo
+```
+
+Confirmar estrutura:
+
+```bash
+ls
+```
+
+Deve existir:
 
 ```text
-/var/www/ademo/
-  ademo-eleitoral-backend/
-  ademo-eleitoral-frontend/
+ademo-eleitoral-backend
+ademo-eleitoral-frontend
 ```
 
-O domínio principal pode apontar para o frontend:
+---
 
-```text
-https://seudominio.com
+## 5. Criar a Base de Dados
+
+Entrar no PostgreSQL:
+
+```bash
+sudo -u postgres psql
 ```
 
-A API pode usar subdomínio:
+Executar:
 
-```text
-https://api.seudominio.com
+```sql
+CREATE DATABASE ademo_eleitoral;
+CREATE USER ademo WITH PASSWORD 'SENHA_FORTE_DA_BASE_DE_DADOS';
+GRANT ALL PRIVILEGES ON DATABASE ademo_eleitoral TO ademo;
+\q
 ```
 
-## 4. Configuração do Backend
+Em PostgreSQL 15 ou superior, tambem pode ser necessario:
 
-Entrar na pasta do backend:
+```bash
+sudo -u postgres psql -d ademo_eleitoral
+```
+
+```sql
+GRANT ALL ON SCHEMA public TO ademo;
+\q
+```
+
+---
+
+## 6. Configurar o Backend Laravel
+
+Entrar no backend:
 
 ```bash
 cd /var/www/ademo/ademo-eleitoral-backend
 ```
 
-Instalar dependências:
+Instalar dependencias:
 
 ```bash
 composer install --no-dev --optimize-autoloader
 ```
 
-Criar ficheiro de produção:
+Criar `.env`:
 
 ```bash
 cp .env.production.example .env
 ```
 
-Gerar chave da aplicação:
+Gerar APP_KEY:
 
 ```bash
 php artisan key:generate
 ```
 
-Ou gerar e copiar manualmente:
+Editar `.env`:
 
 ```bash
-php artisan key:generate --show
+nano .env
 ```
 
-## 5. Exemplo de `.env` de Produção
+---
+
+## 7. `.env` do Backend Sem Dominio
+
+Enquanto nao tiver dominio, use o IP do servidor.
+
+Exemplo:
 
 ```env
 APP_NAME="Sistema Eleitoral ADEMO"
 APP_ENV=production
-APP_KEY=base64:COLOQUE_A_CHAVE_AQUI
+APP_KEY=base64:SUA_CHAVE_GERADA
 APP_DEBUG=false
-APP_URL=https://api.seudominio.com
-FRONTEND_URL=https://seudominio.com
+APP_URL=http://SEU_IP_DO_SERVIDOR:8080
+FRONTEND_URL=http://SEU_IP_DO_SERVIDOR
 
 APP_LOCALE=pt
 APP_FALLBACK_LOCALE=pt
@@ -127,76 +234,80 @@ DB_QUEUE=default
 DB_QUEUE_RETRY_AFTER=120
 QUEUE_FAILED_DRIVER=database-uuids
 
-BROADCAST_CONNECTION=reverb
-REVERB_APP_ID=ademo
-REVERB_APP_KEY=COLOQUE_UMA_CHAVE_FORTE
-REVERB_APP_SECRET=COLOQUE_UM_SECRET_FORTE
-REVERB_HOST=api.seudominio.com
-REVERB_PORT=443
-REVERB_SCHEME=https
-REVERB_SERVER_HOST=0.0.0.0
-REVERB_SERVER_PORT=8080
-
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.seuprovedor.com
 MAIL_PORT=587
-MAIL_USERNAME=seu_email@seudominio.com
+MAIL_USERNAME=seu_email@provedor.com
 MAIL_PASSWORD=SENHA_DO_EMAIL_OU_APP_PASSWORD
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=no-reply@seudominio.com
+MAIL_FROM_ADDRESS=seu_email@provedor.com
 MAIL_FROM_NAME="ADEMO Eleitoral"
+
+BROADCAST_CONNECTION=log
 ```
 
-## 6. Base de Dados
+Nota importante:
 
-Criar base de dados PostgreSQL:
+- Sem dominio, o backend ficara em `http://SEU_IP_DO_SERVIDOR:8080`.
+- O frontend ficara em `http://SEU_IP_DO_SERVIDOR`.
+- As notificacoes por e-mail nao precisam de Reverb.
+- Reverb so e necessario se voltar a usar notificacoes internas em tempo real.
 
-```bash
-sudo -u postgres psql
-```
+---
 
-Dentro do PostgreSQL:
+## 8. Preparar a Base de Dados da Aplicacao
 
-```sql
-CREATE DATABASE ademo_eleitoral;
-CREATE USER ademo WITH PASSWORD 'SENHA_FORTE_DA_BASE_DE_DADOS';
-GRANT ALL PRIVILEGES ON DATABASE ademo_eleitoral TO ademo;
-\q
-```
-
-Executar migrations:
+No backend:
 
 ```bash
 php artisan migrate --force
 ```
 
-Opcionalmente executar seeders:
+Se for uma instalacao inicial e quiser criar dados base:
 
 ```bash
 php artisan db:seed --force
 ```
 
-## 7. Optimização do Laravel
-
-Executar:
+Criar tabelas de fila, cache e sessoes se ainda nao existirem:
 
 ```bash
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan queue:table
+php artisan queue:failed-table
+php artisan cache:table
+php artisan session:table
+php artisan migrate --force
+```
+
+Se alguma migration ja existir, o Laravel avisara. Nesse caso, basta continuar.
+
+Criar link de storage:
+
+```bash
 php artisan storage:link
 ```
 
-Sempre que alterares `.env`, executar:
+Optimizar Laravel:
 
 ```bash
 php artisan optimize:clear
 php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 ```
 
-## 8. Configuração do Frontend
+Permissoes:
 
-Entrar na pasta do frontend:
+```bash
+chown -R www-data:www-data /var/www/ademo/ademo-eleitoral-backend/storage /var/www/ademo/ademo-eleitoral-backend/bootstrap/cache
+chmod -R 775 /var/www/ademo/ademo-eleitoral-backend/storage /var/www/ademo/ademo-eleitoral-backend/bootstrap/cache
+```
+
+---
+
+## 9. Configurar o Frontend Sem Dominio
+
+Entrar no frontend:
 
 ```bash
 cd /var/www/ademo/ademo-eleitoral-frontend
@@ -204,43 +315,62 @@ cd /var/www/ademo/ademo-eleitoral-frontend
 
 Criar `.env.production`:
 
-```env
-VITE_APP_NAME=Sistema Eleitoral ADEMO
-VITE_API_URL=https://api.seudominio.com/api
-VITE_REVERB_APP_KEY=COLOQUE_A_MESMA_CHAVE_DO_REVERB_APP_KEY
-VITE_REVERB_HOST=api.seudominio.com
-VITE_REVERB_PORT=443
-VITE_REVERB_SCHEME=https
+```bash
+nano .env.production
 ```
 
-Instalar dependências:
+Conteudo:
+
+```env
+VITE_APP_NAME=Sistema Eleitoral ADEMO
+VITE_API_URL=http://SEU_IP_DO_SERVIDOR:8080/api
+```
+
+Instalar dependencias e gerar build:
 
 ```bash
 npm install
-```
-
-Gerar build:
-
-```bash
 npm run build
 ```
 
-A pasta gerada será:
+Depois do build, a pasta publicada sera:
 
 ```text
-ademo-eleitoral-frontend/dist
+/var/www/ademo/ademo-eleitoral-frontend/dist
 ```
 
-## 9. Configuração do Nginx Para Backend
+---
 
-Exemplo:
+## 10. Nginx Sem Dominio
+
+Neste cenario, o frontend usa a porta `80` e a API usa a porta `8080`.
+
+Criar configuracao:
+
+```bash
+nano /etc/nginx/sites-available/ademo
+```
+
+Conteudo:
 
 ```nginx
 server {
     listen 80;
-    server_name api.seudominio.com;
-    root /var/www/ademo/ademo-eleitoral-backend/public;
+    server_name SEU_IP_DO_SERVIDOR;
 
+    root /var/www/ademo/ademo-eleitoral-frontend/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+server {
+    listen 8080;
+    server_name SEU_IP_DO_SERVIDOR;
+
+    root /var/www/ademo/ademo-eleitoral-backend/public;
     index index.php index.html;
 
     location / {
@@ -258,85 +388,56 @@ server {
 }
 ```
 
-## 10. Configuração do Nginx Para Frontend
-
-Exemplo:
-
-```nginx
-server {
-    listen 80;
-    server_name seudominio.com;
-    root /var/www/ademo/ademo-eleitoral-frontend/dist;
-
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
-```
-
-## 11. SSL
-
-Instalar Certbot:
+Activar:
 
 ```bash
-sudo apt install certbot python3-certbot-nginx
+ln -s /etc/nginx/sites-available/ademo /etc/nginx/sites-enabled/ademo
+rm -f /etc/nginx/sites-enabled/default
+nginx -t
+systemctl reload nginx
 ```
 
-Gerar certificados:
+Abrir portas no firewall, caso use UFW:
 
 ```bash
-sudo certbot --nginx -d seudominio.com -d api.seudominio.com
+ufw allow OpenSSH
+ufw allow 80/tcp
+ufw allow 8080/tcp
+ufw enable
+ufw status
 ```
 
-## 12. Queue Worker
+Testar no navegador:
 
-O Queue Worker é obrigatório para:
+```text
+http://SEU_IP_DO_SERVIDOR
+```
 
-- Envio de e-mails.
-- Notificações por e-mail.
-- Processamento em segundo plano.
+Testar API:
 
-Comando manual:
+```text
+http://SEU_IP_DO_SERVIDOR:8080/api
+```
+
+---
+
+## 11. Configurar Queue Worker e Scheduler
+
+O Queue Worker e obrigatorio para envio de e-mails. Sem ele, as notificacoes entram na fila mas nao sao enviadas.
+
+O Scheduler e obrigatorio para:
+
+- Abrir eleicoes automaticamente.
+- Encerrar eleicoes automaticamente.
+- Enviar aviso de eleicao prestes a terminar.
+
+Criar ficheiro Supervisor:
 
 ```bash
-php artisan queue:work --queue=notifications,mail,default --sleep=3 --tries=3 --timeout=90 --backoff=60 --memory=256
+nano /etc/supervisor/conf.d/ademo.conf
 ```
 
-## 13. Scheduler
-
-O Scheduler é obrigatório para:
-
-- Abrir eleições automaticamente.
-- Encerrar eleições automaticamente.
-- Enviar aviso de eleição prestes a terminar.
-
-Comando manual:
-
-```bash
-php artisan schedule:work
-```
-
-## 14. Reverb
-
-Necessário caso o sistema continue usando notificações ou actualizações em tempo real.
-
-Comando manual:
-
-```bash
-php artisan reverb:start --host=0.0.0.0 --port=8080
-```
-
-## 15. Supervisor
-
-Criar ficheiro:
-
-```bash
-sudo nano /etc/supervisor/conf.d/ademo.conf
-```
-
-Conteúdo:
+Conteudo:
 
 ```ini
 [program:ademo-queue]
@@ -357,148 +458,352 @@ autorestart=true
 user=www-data
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/ademo-scheduler.log
-
-[program:ademo-reverb]
-command=php /var/www/ademo/ademo-eleitoral-backend/artisan reverb:start --host=0.0.0.0 --port=8080
-directory=/var/www/ademo/ademo-eleitoral-backend
-autostart=true
-autorestart=true
-user=www-data
-redirect_stderr=true
-stdout_logfile=/var/log/supervisor/ademo-reverb.log
 ```
 
 Activar:
 
 ```bash
-sudo supervisorctl reread
-sudo supervisorctl update
-sudo supervisorctl start ademo-queue
-sudo supervisorctl start ademo-scheduler
-sudo supervisorctl start ademo-reverb
-```
-
-Ver estado:
-
-```bash
-sudo supervisorctl status
-```
-
-## 16. Permissões
-
-Na pasta do backend:
-
-```bash
-sudo chown -R www-data:www-data storage bootstrap/cache
-sudo chmod -R 775 storage bootstrap/cache
-```
-
-## 17. Testes Após Hospedagem
-
-Testar API:
-
-```bash
-php artisan route:list --path=api --except-vendor
-```
-
-Testar migrations:
-
-```bash
-php artisan migrate:status
-```
-
-Testar filas:
-
-```bash
-php artisan queue:failed
-```
-
-Testar scheduler manualmente:
-
-```bash
-php artisan elections:sync-statuses
-```
-
-Testar e-mails:
-
-- Criar utilizador com e-mail.
-- Solicitar recuperação de palavra-passe.
-- Abrir/concluir uma eleição de teste.
-- Confirmar se o e-mail chegou.
-
-## 18. Docker em Produção
-
-Se o servidor tiver Docker instalado, pode-se usar:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-Ver serviços:
-
-```bash
-docker compose -f docker-compose.prod.yml ps
+supervisorctl reread
+supervisorctl update
+supervisorctl start ademo-queue
+supervisorctl start ademo-scheduler
+supervisorctl status
 ```
 
 Ver logs:
 
 ```bash
-docker compose -f docker-compose.prod.yml logs -f
+tail -f /var/log/supervisor/ademo-queue.log
+tail -f /var/log/supervisor/ademo-scheduler.log
 ```
 
-O Docker Compose do projecto inclui:
+---
 
-- `postgres`
-- `backend`
-- `backend-web`
-- `queue`
-- `scheduler`
-- `reverb`
-- `frontend`
+## 12. Testes Sem Dominio
 
-## 19. Checklist Final
+No backend:
 
-Antes de colocar em produção, confirmar:
+```bash
+cd /var/www/ademo/ademo-eleitoral-backend
+php artisan migrate:status
+php artisan route:list --path=api --except-vendor
+php artisan queue:failed
+php artisan elections:sync-statuses
+```
+
+Testar imagens de candidatos:
+
+```bash
+curl -I http://SEU_IP_DO_SERVIDOR:8080/candidate-photos/1
+```
+
+Testar e-mails:
+
+1. Criar um utilizador com e-mail real.
+2. Solicitar recuperacao de palavra-passe.
+3. Criar/abrir/concluir uma eleicao de teste.
+4. Confirmar se os e-mails chegaram.
+5. Verificar falhas:
+
+```bash
+php artisan queue:failed
+```
+
+---
+
+## 13. Actualizar o Sistema Depois de Alteracoes no Git
+
+Sempre que fizer alteracoes no computador e enviar para o Git, no servidor execute:
+
+```bash
+cd /var/www/ademo
+git pull origin main
+```
+
+Actualizar backend:
+
+```bash
+cd /var/www/ademo/ademo-eleitoral-backend
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+supervisorctl restart ademo-queue
+supervisorctl restart ademo-scheduler
+```
+
+Actualizar frontend:
+
+```bash
+cd /var/www/ademo/ademo-eleitoral-frontend
+npm install
+npm run build
+systemctl reload nginx
+```
+
+---
+
+## 14. Quando Tiver Dominio
+
+Quando comprar/configurar dominio, crie os DNS:
+
+```text
+Tipo A    seu-dominio.com       SEU_IP_DO_SERVIDOR
+Tipo A    www.seu-dominio.com   SEU_IP_DO_SERVIDOR
+Tipo A    api.seu-dominio.com   SEU_IP_DO_SERVIDOR
+```
+
+Aguarde a propagacao. Pode testar:
+
+```bash
+ping seu-dominio.com
+ping api.seu-dominio.com
+```
+
+---
+
+## 15. Alterar Backend Para Dominio
+
+Editar `.env` do backend:
+
+```bash
+cd /var/www/ademo/ademo-eleitoral-backend
+nano .env
+```
+
+Alterar:
+
+```env
+APP_URL=https://api.seu-dominio.com
+FRONTEND_URL=https://seu-dominio.com
+BROADCAST_CONNECTION=log
+```
+
+Se algum dia voltar a usar Reverb:
+
+```env
+BROADCAST_CONNECTION=reverb
+REVERB_APP_ID=ademo
+REVERB_APP_KEY=CHAVE_FORTE
+REVERB_APP_SECRET=SECRET_FORTE
+REVERB_HOST=api.seu-dominio.com
+REVERB_PORT=443
+REVERB_SCHEME=https
+REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8080
+```
+
+Aplicar:
+
+```bash
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+```
+
+---
+
+## 16. Alterar Frontend Para Dominio
+
+Editar `.env.production`:
+
+```bash
+cd /var/www/ademo/ademo-eleitoral-frontend
+nano .env.production
+```
+
+Conteudo:
+
+```env
+VITE_APP_NAME=Sistema Eleitoral ADEMO
+VITE_API_URL=https://api.seu-dominio.com/api
+```
+
+Gerar novo build:
+
+```bash
+npm run build
+```
+
+---
+
+## 17. Nginx Com Dominio
+
+Editar configuracao:
+
+```bash
+nano /etc/nginx/sites-available/ademo
+```
+
+Conteudo:
+
+```nginx
+server {
+    listen 80;
+    server_name seu-dominio.com www.seu-dominio.com;
+
+    root /var/www/ademo/ademo-eleitoral-frontend/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+server {
+    listen 80;
+    server_name api.seu-dominio.com;
+
+    root /var/www/ademo/ademo-eleitoral-backend/public;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
+
+Validar e recarregar:
+
+```bash
+nginx -t
+systemctl reload nginx
+```
+
+---
+
+## 18. Activar SSL Com Dominio
+
+Instalar Certbot:
+
+```bash
+apt install -y certbot python3-certbot-nginx
+```
+
+Gerar certificados:
+
+```bash
+certbot --nginx -d seu-dominio.com -d www.seu-dominio.com -d api.seu-dominio.com
+```
+
+Testar renovacao:
+
+```bash
+certbot renew --dry-run
+```
+
+Depois do SSL, fechar a porta `8080` se ja nao estiver a ser usada:
+
+```bash
+ufw delete allow 8080/tcp
+ufw allow 443/tcp
+ufw status
+```
+
+---
+
+## 19. Testes Com Dominio
+
+Abrir no navegador:
+
+```text
+https://seu-dominio.com
+```
+
+Testar API:
+
+```bash
+curl -I https://api.seu-dominio.com/api
+```
+
+Testar fotografia:
+
+```bash
+curl -I https://api.seu-dominio.com/candidate-photos/1
+```
+
+Testar filas:
+
+```bash
+cd /var/www/ademo/ademo-eleitoral-backend
+php artisan queue:failed
+supervisorctl status
+```
+
+---
+
+## 20. Checklist Final de Producao
+
+Confirmar:
 
 - `APP_ENV=production`.
 - `APP_DEBUG=false`.
 - `APP_KEY` definida.
 - `APP_URL` correcto.
 - `FRONTEND_URL` correcto.
+- `VITE_API_URL` correcto antes do `npm run build`.
 - Base de dados criada.
 - Migrations executadas.
 - SMTP real configurado.
 - Queue Worker activo.
 - Scheduler activo.
-- Reverb activo, se necessário.
-- SSL activo.
-- Frontend com `VITE_API_URL` correcto.
-- Permissões de `storage` e `bootstrap/cache` correctas.
-- `php artisan config:cache` executado.
-- `npm run build` executado no frontend.
+- Supervisor activo.
+- `storage:link` executado.
+- Permissoes de `storage` e `bootstrap/cache` correctas.
+- Nginx activo.
+- SSL activo quando tiver dominio.
+- Porta `8080` fechada quando passar para dominio com `api.seu-dominio.com`.
 
-## 20. Pontos Críticos
+---
+
+## 21. Pontos Criticos
 
 Sem Queue Worker:
 
-- Os e-mails não serão enviados.
-- Notificações por e-mail ficarão pendentes na fila.
+- Os e-mails nao serao enviados.
+- Notificacoes ficarao pendentes na fila.
 
 Sem Scheduler:
 
-- Eleições não abrirão automaticamente.
-- Eleições não serão concluídas automaticamente.
-- Avisos de término não serão enviados.
+- Eleicoes nao abrirao automaticamente.
+- Eleicoes nao serao concluidas automaticamente.
+- Avisos de eleicao prestes a terminar nao serao enviados.
 
 Sem SMTP correcto:
 
-- O sistema processará a fila, mas os e-mails não chegarão aos utilizadores.
+- O sistema processara a fila, mas os e-mails nao chegarao.
 
-Sem SSL:
+Sem dominio:
 
-- O sistema fica inseguro.
-- Alguns navegadores podem bloquear funcionalidades modernas.
+- Pode usar o IP do servidor.
+- Nao tera SSL facil.
+- O sistema funciona, mas para producao real o ideal e usar dominio com HTTPS.
 
 Sem `APP_DEBUG=false`:
 
-- Dados sensíveis podem aparecer em erros públicos.
+- Dados sensiveis podem aparecer em erros publicos.
+
+---
+
+## 22. Docker
+
+Docker e opcional neste projecto.
+
+Use Docker se:
+
+- O servidor ja tiver Docker instalado.
+- Quiser subir backend, frontend, banco, queue e scheduler por containers.
+- Souber gerir volumes, backups e logs dos containers.
+
+Se nao quiser usar Docker, siga o guia normal acima. Para este projecto, hospedagem normal com Nginx, PHP-FPM, PostgreSQL e Supervisor e suficiente.
