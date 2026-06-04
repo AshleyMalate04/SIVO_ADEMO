@@ -6,7 +6,8 @@ RUN composer install \
     --prefer-dist \
     --no-interaction \
     --no-progress \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --no-scripts
 
 FROM php:8.3-fpm-alpine AS runtime
 
