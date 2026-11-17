@@ -9,8 +9,6 @@ cp .env.production.example .env.production
 cp ademo-eleitoral-backend/.env.production.example ademo-eleitoral-backend/.env.production
 ```
 
-
-
 Depois altere obrigatoriamente:
 
 - `POSTGRES_PASSWORD`
@@ -59,11 +57,7 @@ Executar migracoes manualmente:
 docker compose -f docker-compose.prod.yml exec backend php artisan migrate --force
 ```
 
-Criar link de storage:
-
-```bash
-docker compose -f docker-compose.prod.yml exec backend php artisan storage:link
-```
+Os documentos novos de candidatos ficam em `storage/app/private/candidates/documents` e são descarregados por uma URL assinada com validade de uma hora. O link público de storage não é necessário para este deploy. Os ficheiros antigos em `storage/app/public/candidates/documents` continuam disponíveis pela rota assinada, mas devem ser copiados para o disco privado e retirados da pasta pública após backup e verificação dos ficheiros. Confirme também que qualquer proxy adicional bloqueia o acesso directo a `/storage/candidates/documents/`.
 
 Limpar caches:
 

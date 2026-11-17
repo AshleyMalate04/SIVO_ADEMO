@@ -57,7 +57,7 @@ class UserController extends CrudController
     protected function prepareData(array $data, ?Model $record = null): array
     {
         if ($record === null) {
-            $data['password'] = $data['password'] ?? AccessNotificationService::DEFAULT_PASSWORD;
+            $data['password'] = $data['password'] ?? AccessNotificationService::generateInitialPassword();
             $data['status'] = $data['status'] ?? 'ACTIVE';
         }
 
@@ -66,6 +66,8 @@ class UserController extends CrudController
 
     public function store(Request $request): JsonResponse
     {
+        $initialPassword = (string) ($request->input('password') ?: AccessNotificationService::generateInitialPassword());
+        $request->merge(['password' => $initialPassword]);
         $response = parent::store($request);
         $payload = $response->getData(true);
         $userId = $payload['data']['id'] ?? null;
@@ -73,7 +75,11 @@ class UserController extends CrudController
         if ($userId) {
             $user = User::find($userId);
             if ($user) {
-                $emailSent = AccessNotificationService::notifyInitialAccess($user);
+                $emailSent = AccessNotificationService::notifyInitialAccess($user, $initialPassword);
+                if (! $emailSent) {
+                    $payload['data']['initial_password'] = $initialPassword;
+                    $response->setData($payload);
+                }
                 AuditService::record($request, 'CREDENCIAIS_INICIAIS_ENVIADAS', 'User', $user->id, [
                     'email_sent' => $emailSent,
                     'email_available' => (bool) $user->email,
@@ -102,5 +108,14 @@ class UserController extends CrudController
         ]);
 
         return ApiResponse::success($user->load('delegation'), 'Estado do utilizador actualizado com sucesso.');
+    }
+
+    public function destroy(Request $request, int|string $id): JsonResponse
+    {
+        if ((int) $request->user()?->id === (int) $id) {
+            return ApiResponse::error('Nao pode eliminar o utilizador autenticado.', 422);
+        }
+
+        return parent::destroy($request, $id);
     }
 }

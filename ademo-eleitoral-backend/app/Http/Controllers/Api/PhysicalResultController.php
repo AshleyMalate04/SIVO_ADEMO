@@ -11,6 +11,7 @@ use App\Services\AuditService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -38,21 +39,35 @@ class PhysicalResultController extends Controller
             'totals.*.votes' => ['required', 'integer', 'min:0'],
         ]);
 
-        $records = collect($data['totals'])->map(function (array $total) use ($election, $request) {
-            return PhysicalVoteTotal::updateOrCreate(
-                [
-                    'election_id' => $election->id,
-                    'candidate_id' => $total['candidate_id'] ?? null,
-                ],
-                [
-                    'votes' => $total['votes'],
-                    'status' => 'PENDING',
-                    'registered_by' => $request->user()?->id,
-                    'approved_by' => null,
-                    'approved_at' => null,
-                ],
-            )->load('candidate.member');
-        });
+        DB::beginTransaction();
+
+        try {
+            // O mesmo bloqueio e usado pela publicacao; assim nao entram totais
+            // depois da verificacao que antecede a publicacao final.
+            $election = Election::query()->lockForUpdate()->findOrFail($id);
+            $this->ensureCanManage($request, $election);
+            $this->ensureElectionIsConcluded($election);
+
+            $records = collect($data['totals'])->map(function (array $total) use ($election, $request) {
+                return PhysicalVoteTotal::updateOrCreate(
+                    [
+                        'election_id' => $election->id,
+                        'candidate_id' => $total['candidate_id'] ?? null,
+                    ],
+                    [
+                        'votes' => $total['votes'],
+                        'status' => 'PENDING',
+                        'registered_by' => $request->user()?->id,
+                        'approved_by' => null,
+                        'approved_at' => null,
+                    ],
+                )->load('candidate.member');
+            });
+            DB::commit();
+        } catch (\Throwable $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
         AuditService::record($request, 'RESULTADOS_PRESENCIAIS_REGISTADOS', 'Election', $election->id, [
             'election_id' => $election->id,
             'totals_count' => $records->count(),
@@ -64,15 +79,23 @@ class PhysicalResultController extends Controller
 
     public function approve(Request $request, int|string $id): JsonResponse
     {
-        $election = Election::findOrFail($id);
-        $this->ensureCanManage($request, $election);
-        $this->ensureElectionIsConcluded($election);
+        DB::beginTransaction();
 
-        PhysicalVoteTotal::where('election_id', $id)->update([
-            'status' => 'APPROVED',
-            'approved_by' => $request->user()?->id,
-            'approved_at' => now(),
-        ]);
+        try {
+            $election = Election::query()->lockForUpdate()->findOrFail($id);
+            $this->ensureCanManage($request, $election);
+            $this->ensureElectionIsConcluded($election);
+
+            PhysicalVoteTotal::where('election_id', $id)->update([
+                'status' => 'APPROVED',
+                'approved_by' => $request->user()?->id,
+                'approved_at' => now(),
+            ]);
+            DB::commit();
+        } catch (\Throwable $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
 
         AuditService::record($request, 'RESULTADOS_PRESENCIAIS_APROVADOS', 'Election', $election->id, [
             'election_id' => $election->id,

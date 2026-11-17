@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
-import { Download, Eye, Search, X } from 'lucide-react'
+import { Download, Search, X } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import ManagementPagination from '../../components/common/ManagementPagination'
+import DatePicker from '../../components/common/DatePicker'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
+import RowActions from '../../components/common/RowActions'
 import { auditService } from '../../services/auditService'
 import { exportCsv } from '../../utils/exportFile'
 import { notify } from '../../utils/notify'
 
-const PAGE_SIZE = 7
+const DEFAULT_PAGE_SIZE = 25
 
 const normalize = (value) => String(value ?? '')
   .toLowerCase()
@@ -72,6 +75,7 @@ const allowedAuditActions = [
   'RESULTADOS_PRESENCIAIS_APROVADOS',
   'RESULTADOS_PUBLICADOS',
   'REGISTO_OCULTADO',
+  'REGISTO_ELIMINADO',
   'REGISTO_SUSPENSO',
   'REGISTO_ACTIVADO',
   'REGISTO_CRIADO',
@@ -112,6 +116,10 @@ const actionAliases = {
   OCULTADO: 'REGISTO_OCULTADO',
   HIDE: 'REGISTO_OCULTADO',
   HIDDEN: 'REGISTO_OCULTADO',
+  ELIMINADO: 'REGISTO_ELIMINADO',
+  ELIMINADA: 'REGISTO_ELIMINADO',
+  DELETED: 'REGISTO_ELIMINADO',
+  ELEITOR_REMOVIDO: 'REGISTO_ELIMINADO',
 
   SUSPENSA: 'REGISTO_SUSPENSO',
   SUSPENSO: 'REGISTO_SUSPENSO',
@@ -147,6 +155,7 @@ const actionLabels = {
   RESULTADOS_PRESENCIAIS_APROVADOS: 'Resultados presenciais aprovados',
   RESULTADOS_PUBLICADOS: 'Resultados publicados',
   REGISTO_OCULTADO: 'Registo ocultado',
+  REGISTO_ELIMINADO: 'Registo eliminado',
   REGISTO_SUSPENSO: 'Registo suspenso',
   REGISTO_ACTIVADO: 'Registo activo',
   REGISTO_CRIADO: 'Registo criado',
@@ -174,6 +183,8 @@ const entityLabels = {
   election_voters: 'Eleitor autorizado',
   PhysicalVoteTotal: 'Resultado presencial',
   physical_vote_totals: 'Resultado presencial',
+  Notification: 'Notificacao',
+  notifications: 'Notificacao',
   Delegation: 'Delegação',
   delegations: 'Delegação',
   Organ: 'Órgão',
@@ -204,6 +215,7 @@ const detailLabels = {
   delegation_name: 'Delegação',
   is_blank: 'Voto em branco',
   fields: 'Campos alterados',
+  record_name: 'Registo efectuado',
   total_votes: 'Total de votos',
   online_votes: 'Votos online',
   physical_votes: 'Votos presenciais',
@@ -318,6 +330,7 @@ const displayEntity = (row) => {
 
 export default function AuditPage() {
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [query, setQuery] = useState('')
   const [actionFilter, setActionFilter] = useState('')
   const [dateFilter, setDateFilter] = useState('')
@@ -358,13 +371,16 @@ export default function AuditPage() {
   }, [actionFilter, dateFilter, query, rows])
 
   useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE))
+    const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize))
 
     if (page > totalPages) setPage(totalPages)
-  }, [filteredRows.length, page])
+  }, [filteredRows.length, page, pageSize])
 
   const actions = allowedAuditActions
-  const pageRows = filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const safePage = Math.min(page, Math.max(1, Math.ceil(filteredRows.length / pageSize)))
+  const pageRows = filteredRows.slice((safePage - 1) * pageSize, safePage * pageSize)
+  const firstRow = filteredRows.length ? (safePage - 1) * pageSize + 1 : 0
+  const lastRow = Math.min(safePage * pageSize, filteredRows.length)
 
   if (loading) return <Loading label="A carregar auditoria..." />
 
@@ -378,6 +394,8 @@ export default function AuditPage() {
         <button
           className="primary-action-button top-create-button"
           type="button"
+          disabled={filteredRows.length === 0}
+          title={filteredRows.length === 0 ? 'Não existem dados para exportar' : 'Exportar registos de auditoria'}
           onClick={() => exportCsv(
             'auditoria',
             ['Data/Hora', 'Utilizador', 'Acção', 'Entidade', 'Descrição'],
@@ -402,17 +420,19 @@ export default function AuditPage() {
             {actions.map((action) => <option key={action} value={action}>{humaniseAction(action)}</option>)}
           </select>
         </label>
-        <label className="filter-field">
-          <input type="date" value={dateFilter} onChange={(event) => { setDateFilter(event.target.value); setPage(1) }} />
-        </label>
+        <DatePicker value={dateFilter} onChange={(nextDate) => { setDateFilter(nextDate); setPage(1) }} ariaLabel="Filtrar auditoria por data" />
         <label className="filter-field filter-search">
           <Search size={20} />
           <input
-            placeholder="Pesquisar por acção, utilizador, entidade ou detalhe"
+            placeholder="Pesquisar auditoria..."
             value={query}
             onChange={(event) => { setQuery(event.target.value); setPage(1) }}
           />
         </label>
+        <ClearFiltersButton
+          active={Boolean(query || actionFilter || dateFilter)}
+          onClick={() => { setQuery(''); setActionFilter(''); setDateFilter(''); setPage(1) }}
+        />
       </section>
 
       <section className="table-card audit-table">
@@ -440,17 +460,29 @@ export default function AuditPage() {
                 <td data-label="Entidade">{displayEntity(row)}</td>
                 <td data-label="Descrição">{formatDetails(row)[0]}</td>
                 <td data-label="Consultar">
-                  <button className="secondary-button compact-button" type="button" onClick={() => setSelectedLog(row)}>
-                    <Eye size={16} /> Ver detalhes
-                  </button>
+                  <RowActions
+                    title={`Auditoria de ${displayUser(row)}`}
+                    onView={() => setSelectedLog(row)}
+                    hideDelete
+                    disableEdit
+                    disableStatus
+                  />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
         <footer className="table-footer">
-          <span>A mostrar {filteredRows.length ? Math.min((page - 1) * PAGE_SIZE + 1, filteredRows.length) : 0} a {Math.min(page * PAGE_SIZE, filteredRows.length)} de {filteredRows.length} resultados</span>
-          {filteredRows.length > PAGE_SIZE ? <ManagementPagination totalItems={filteredRows.length} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} /> : null}
+          <span className="table-footer__summary" aria-label={`${firstRow}-${lastRow} de ${filteredRows.length} resultados`}>
+            <strong>{firstRow}-{lastRow} de {filteredRows.length}</strong><span className="table-footer__summary-label">resultados</span>
+          </span>
+          <ManagementPagination
+            totalItems={filteredRows.length}
+            page={safePage}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(nextPageSize) => { setPageSize(nextPageSize); setPage(1) }}
+          />
         </footer>
       </section>
 

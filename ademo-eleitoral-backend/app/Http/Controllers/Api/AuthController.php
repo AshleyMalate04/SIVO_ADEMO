@@ -9,21 +9,34 @@ use App\Models\User;
 use App\Services\AuditService;
 use App\Services\NotificationService;
 use App\Support\ApiResponse;
+use App\Support\FrontendUrl;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use RuntimeException;
+use Illuminate\Support\Facades\RateLimiter;
+use Throwable;
 
 class AuthController extends Controller
 {
     public function login(LoginRequest $request): JsonResponse
     {
+        $rateLimitKey = 'login:'.hash('sha256', mb_strtolower((string) $request->access_code).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            return ApiResponse::error('Muitas tentativas. Aguarde antes de tentar novamente.', 429, [
+                'retry_after' => RateLimiter::availableIn($rateLimitKey),
+            ]);
+        }
+
         $user = User::where('access_code', $request->access_code)->first();
 
         if (! $user || ! $this->passwordMatches($request->password, $user)) {
+            RateLimiter::hit($rateLimitKey, 60);
+
             return ApiResponse::error('Código de acesso ou palavra-passe inválidos.', 401);
         }
 
@@ -31,6 +44,7 @@ class AuthController extends Controller
             return ApiResponse::error('A conta encontra-se inactiva ou bloqueada.', 403);
         }
 
+        RateLimiter::clear($rateLimitKey);
         $user->tokens()->delete();
 
         $token = $user->createToken('ademo-auth-token')->plainTextToken;
@@ -83,14 +97,16 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        $email = mb_strtolower(trim($validated['email']));
+        $user = User::query()
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->first();
 
-        if (! $user) {
-            return ApiResponse::error('Não encontramos uma conta activa com este email.', 404);
-        }
-
-        if (! $user->isActive()) {
-            return ApiResponse::error('A conta encontra-se inactiva ou bloqueada.', 403);
+        if (! $user || ! $user->isActive()) {
+            return ApiResponse::error(
+                'Este email não está associado a uma conta activa no sistema.',
+                422
+            );
         }
 
         $code = (string) random_int(100000, 999999);
@@ -103,17 +119,26 @@ class AuthController extends Controller
             ]
         );
 
-        $resetUrl = rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/').'/verificar-codigo?email='.urlencode($user->email).'&code='.urlencode($code);
+        $resetUrl = FrontendUrl::to('/verificar-codigo', $request).'?'.http_build_query([
+            'email' => $user->email,
+            'code' => $code,
+        ]);
 
-        Mail::to($user->email, $user->name)->queue(new PasswordResetCodeMail($user, $code, $resetUrl));
+        try {
+            Mail::to($user->email, $user->name)->send(new PasswordResetCodeMail($user, $code, $resetUrl));
+        } catch (Throwable $exception) {
+            Log::warning('Falha ao enviar codigo de redefinicao de senha.', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $exception->getMessage(),
+            ]);
+
+            // A resposta permanece indistinguível para não permitir enumeração de contas.
+        }
 
         return ApiResponse::success(
-            [
-                'email' => $user->email,
-                'expires_in_minutes' => 15,
-                'reset_url' => $resetUrl,
-            ],
-            'Enviamos um código de 6 dígitos para o email informado.'
+            ['expires_in_minutes' => 15],
+            'Enviámos as instruções de recuperação para o email registado.'
         );
     }
 
@@ -174,20 +199,7 @@ class AuthController extends Controller
 
     private function passwordMatches(string $plainPassword, User $user): bool
     {
-        try {
-            return Hash::check($plainPassword, $user->password);
-        } catch (RuntimeException) {
-            if (! hash_equals((string) $user->password, $plainPassword)) {
-                return false;
-            }
-
-            $user->forceFill([
-                'password' => $plainPassword,
-                'password_changed_at' => now(),
-            ])->save();
-
-            return true;
-        }
+        return Hash::check($plainPassword, $user->password);
     }
 
     private function redirectByRole(string $role): string

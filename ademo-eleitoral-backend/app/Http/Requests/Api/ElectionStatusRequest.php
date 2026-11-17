@@ -9,7 +9,8 @@ class ElectionStatusRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', Rule::in(['PROGRAMADA', 'EM_VOTACAO', 'CONCLUIDA', 'RESULTADOS_PUBLICADOS', 'SUSPENDED'])],
+            // A publicacao usa o endpoint proprio, que valida o apuramento presencial.
+            'status' => ['required', Rule::in(['EM_VOTACAO', 'CONCLUIDA'])],
         ];
     }
 }

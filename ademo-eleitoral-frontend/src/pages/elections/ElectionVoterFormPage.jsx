@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import PaginationLayout from '../../components/common/PaginationLayout'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import { delegationService } from '../../services/delegationService'
 import { electionService } from '../../services/electionService'
 import { memberService } from '../../services/memberService'
@@ -106,7 +107,7 @@ export default function ElectionVoterFormPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão de Eleitores</h1>
+        <h1>Gestão de eleitores</h1>
         <p>Seleccione membros registados para os adicionar à lista de eleitores desta eleição.</p>
       </header>
 
@@ -133,7 +134,7 @@ export default function ElectionVoterFormPage() {
         <section className="filters-panel" aria-label="Filtros para selecção de eleitores">
           <label className="filter-field filter-search">
             <Search size={22} />
-            <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar por nome, email ou telefone" />
+            <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar membros..." />
           </label>
           <label className="filter-field">
             <select value={filters.delegation} onChange={(event) => setFilters((current) => ({ ...current, delegation: event.target.value }))}>
@@ -141,6 +142,7 @@ export default function ElectionVoterFormPage() {
               {delegations.map((delegation) => <option key={delegation.id} value={delegation.id}>{delegation.name}</option>)}
             </select>
           </label>
+          <ClearFiltersButton active={Object.values(filters).some(Boolean)} onClick={() => setFilters({ q: '', delegation: '' })} />
         </section>
 
         <section className="table-card management-table-card selectable-table">
@@ -152,10 +154,10 @@ export default function ElectionVoterFormPage() {
                     <th><input className="team-checkbox" type="checkbox" aria-label="Seleccionar todos" onChange={(event) => setSelectedMembers(event.target.checked ? filteredMembers.map((member) => member.id) : [])} /></th>
                     <th>Nome</th>
                     <th>Código</th>
-                    <th>Delegação de Origem</th>
+                    <th>Delegação de origem</th>
                     <th>Email</th>
                     <th>Contacto</th>
-                    <th><span className="state-heading">Estado <ArrowDown size={18} /></span></th>
+                    <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -171,7 +173,7 @@ export default function ElectionVoterFormPage() {
                       <td>{member.delegation}</td>
                       <td>{member.email}</td>
                       <td>{member.contact}</td>
-                      <td><span className="status-pill"><span></span>{member.status}</span></td>
+                      <td><span className="status-pill">{member.status}</span></td>
                     </tr>
                   ))}
                 </tbody>

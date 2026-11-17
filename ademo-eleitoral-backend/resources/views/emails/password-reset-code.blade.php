@@ -7,7 +7,7 @@
   <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">Olá, {{ $name }}</p>
 
   <p style="margin:0 0 18px;font-size:16px;line-height:1.65;color:#263244;">
-    Recebemos um pedido para redefinir a sua palavra-passe no sistema eleitoral ADEMO.
+    Recebemos um pedido para redefinir a sua palavra-passe no Sistema de Votação Eleitoral ADEMO.
   </p>
 
   <p style="margin:0 0 10px;font-size:15px;line-height:1.5;color:#263244;">Código de verificação:</p>

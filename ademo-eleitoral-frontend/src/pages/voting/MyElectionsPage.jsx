@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { BarChart3, CheckSquare, Info, Search } from "lucide-react";
+import { CheckSquare, Info, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import Loading from "../../components/common/Loading";
+import ClearFiltersButton from "../../components/common/ClearFiltersButton";
 import { voteService } from "../../services/voteService";
 import { notify } from "../../utils/notify";
 import { useElectionRealtime } from "../../hooks/useElectionRealtime";
@@ -73,7 +74,7 @@ export default function MyElectionsPage() {
   return (
     <section className="voter-page">
       <header className="management-header">
-        <h1>Eleições Disponíveis</h1>
+        <h1>Eleições disponíveis</h1>
         <p>Consulte todas as eleições e participe apenas nas votações em que foi seleccionado.</p>
       </header>
 
@@ -110,6 +111,10 @@ export default function MyElectionsPage() {
             ))}
           </div>
         </div>
+        <ClearFiltersButton
+          active={Boolean(searchTerm || statusFilter !== 'all')}
+          onClick={() => { setSearchTerm(''); setStatusFilter('all') }}
+        />
       </section>
 
       <section className="voter-election-grid">
@@ -141,10 +146,6 @@ export default function MyElectionsPage() {
                 <Info size={18} />
                 Ver detalhes
               </Link>
-              {/* <Link className="secondary-button" to={`/portal-eleitor/resultados?eleicao=${election.id}`}>
-                <BarChart3 size={18} />
-                Resultados
-              </Link> */}
             </div>
           </article>
         ))}

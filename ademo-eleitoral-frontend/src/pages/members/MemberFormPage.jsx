@@ -38,13 +38,13 @@ export default function MemberFormPage() {
       member_code: formData.get('member_code')?.trim(),
       delegation_id: formData.get('delegation_id') ? Number(formData.get('delegation_id')) : null,
       phone: formData.get('phone')?.trim() || null,
-      email: formData.get('email')?.trim() || null,
+      email: formData.get('email')?.trim().toLowerCase() || '',
       bi_number: formData.get('bi_number')?.trim() || null,
       status: member?.status ?? 'ACTIVE',
     }
 
-    if (!payload.name || !payload.member_code || !payload.delegation_id || !payload.phone || !payload.bi_number) {
-      notify.error('Campos obrigatórios.', 'Preencha todos os campos obrigatórios. Apenas o email é opcional.')
+    if (!payload.name || !payload.member_code || !payload.delegation_id || !payload.phone || !payload.email || !payload.bi_number) {
+      notify.error('Campos obrigatórios.', 'Preencha todos os campos obrigatórios, incluindo o email.')
       return
     }
 
@@ -63,15 +63,19 @@ export default function MemberFormPage() {
       return
     }
 
-    if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
       notify.error('Email inválido.', 'Informe um email válido.')
       return
     }
 
     try {
       setSaving(true)
-      if (isEditing) await memberService.update(id, payload)
-      else await memberService.create(payload)
+      const savedMember = isEditing
+        ? await memberService.update(id, payload)
+        : await memberService.create(payload)
+      if (savedMember?.initial_password) {
+        notify.warning('Guarde a palavra-passe inicial.', `${savedMember.member_code}: ${savedMember.initial_password}`)
+      }
       notify.success(isEditing ? 'Dados do membro alterados.' : 'Membro registado com sucesso.')
       navigate('/membros')
     } catch (error) {
@@ -84,8 +88,8 @@ export default function MemberFormPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão de Membros</h1>
-        <p>{isEditing ? 'Altere os dados do membro seleccionado.' : 'Registe os dados do membro e associe-o a sua delegação de origem.'}</p>
+        <h1>Gestão de membros</h1>
+        <p>{isEditing ? 'Altere os dados do membro seleccionado.' : 'Registe os dados do membro e associe-o à sua delegação de origem.'}</p>
       </header>
 
       <div className="mode-tabs" aria-label="Modo de gestão">
@@ -97,14 +101,14 @@ export default function MemberFormPage() {
         <div className="form-grid two-columns">
           <label className="form-field">
             <span>Nome</span>
-            <input name="name" required defaultValue={member?.name ?? ''} onInput={(event) => { event.currentTarget.value = uppercaseName(event.currentTarget.value) }} />
+            <input name="name" required placeholder="Nome completo" defaultValue={member?.name ?? ''} onInput={(event) => { event.currentTarget.value = uppercaseName(event.currentTarget.value) }} />
           </label>
           <label className="form-field">
             <span>Código de membro</span>
-            <input name="member_code" required defaultValue={member?.member_code ?? ''} />
+            <input name="member_code" required placeholder="Ex.: MEM-0001" defaultValue={member?.member_code ?? ''} />
           </label>
           <label className="form-field select-field">
-            <span>Delegação de Origem</span>
+            <span>Delegação de origem</span>
             <select name="delegation_id" required value={member?.delegation_id ?? ''} onChange={(event) => setMember((current) => ({ ...(current ?? {}), delegation_id: event.target.value }))}>
               <option value="">Seleccione a delegação</option>
               {delegations.map((delegation) => <option key={delegation.id} value={delegation.id}>{delegation.name}</option>)}
@@ -116,7 +120,7 @@ export default function MemberFormPage() {
           </label>
           <label className="form-field">
             <span>Email</span>
-            <input name="email" type="email" defaultValue={member?.email ?? ''} />
+            <input name="email" type="email" required autoComplete="email" placeholder="nome@exemplo.com" defaultValue={member?.email ?? ''} />
           </label>
           <label className="form-field">
             <span>BI</span>

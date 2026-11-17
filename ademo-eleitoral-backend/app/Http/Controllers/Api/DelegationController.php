@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\Api\DelegationRequest;
 use App\Models\Delegation;
-use App\Services\AuditService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,12 +30,4 @@ class DelegationController extends CrudController
         return parent::update($request, $id);
     }
 
-    public function destroy(Request $request, int|string $id): JsonResponse
-    {
-        $delegation = Delegation::findOrFail($id);
-        $delegation->update(['status' => 'INACTIVE']);
-        AuditService::modelAction($request, 'HIDE', $delegation, ['status' => 'INACTIVE']);
-
-        return ApiResponse::success($delegation, 'Delegacao eliminada com sucesso.');
-    }
 }

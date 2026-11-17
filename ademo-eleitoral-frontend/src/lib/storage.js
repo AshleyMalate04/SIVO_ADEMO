@@ -6,6 +6,7 @@ export function saveAuthData({ token, user, menu = [] }) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   localStorage.setItem(MENU_KEY, JSON.stringify(menu));
+  setEchoAuthToken(token);
 }
 
 export function getAuthToken() {
@@ -41,6 +42,10 @@ export function clearAuthData() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(MENU_KEY);
+  Object.keys(sessionStorage)
+    .filter((key) => key.startsWith("ademo-ballot-selection-"))
+    .forEach((key) => sessionStorage.removeItem(key));
+  setEchoAuthToken(null);
 }
 
 export function isAuthenticated() {
@@ -52,3 +57,4 @@ export const storage = {
   set: (key, value) => localStorage.setItem(key, value),
   remove: (key) => localStorage.removeItem(key),
 };
+import { setEchoAuthToken } from './echo'

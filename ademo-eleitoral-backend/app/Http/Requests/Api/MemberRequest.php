@@ -20,6 +20,10 @@ class MemberRequest extends ApiFormRequest
             $data['bi_number'] = $this->input('bi_number') ? mb_strtoupper(trim((string) $this->input('bi_number')), 'UTF-8') : $this->input('bi_number');
         }
 
+        if ($this->has('email')) {
+            $data['email'] = mb_strtolower(trim((string) $this->input('email')), 'UTF-8');
+        }
+
         $this->merge($data);
     }
 
@@ -46,7 +50,7 @@ class MemberRequest extends ApiFormRequest
                 Rule::unique('users', 'phone')->ignore($linkedUserId),
             ],
             'email' => [
-                'nullable',
+                $required,
                 'email',
                 'max:200',
                 Rule::unique('members', 'email')->ignore($this->routeId()),
@@ -63,6 +67,7 @@ class MemberRequest extends ApiFormRequest
     public function messages(): array
     {
         return [
+            'email.required' => 'Informe o email do membro.',
             'member_code.unique' => 'Este código de membro já foi registado.',
             'email.email' => 'Informe um email válido.',
             'email.unique' => 'Este email já foi registado no sistema.',

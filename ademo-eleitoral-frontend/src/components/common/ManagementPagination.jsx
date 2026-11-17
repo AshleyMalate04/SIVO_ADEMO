@@ -1,48 +1,62 @@
-﻿import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function ManagementPagination({
   totalItems,
   page,
-  pageSize = 7,
+  pageSize = 25,
   onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [5, 10, 25, 50],
 }) {
-  const totalPages = Math.ceil(totalItems / pageSize)
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+  const safePage = Math.min(Math.max(page, 1), totalPages)
 
-  if (totalItems <= pageSize || totalPages <= 1) {
-    return null
-  }
-
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1)
+  const availablePageSizes = [...new Set([...pageSizeOptions, pageSize])]
+    .map(Number)
+    .filter((value) => Number.isInteger(value) && value > 0)
+    .sort((first, second) => first - second)
 
   return (
-    <nav className="table-pagination" aria-label="Paginação">
-      <button
-        className="pagination-edge"
-        type="button"
-        disabled={page === 1}
-        onClick={() => onPageChange(Math.max(1, page - 1))}
-      >
-        <ArrowLeft size={18} /> Anterior
-      </button>
-      <div className="pagination-pages">
-        {pages.map((pageNumber) => (
-          <button
-            className={pageNumber === page ? 'pagination-page active' : 'pagination-page'}
-            type="button"
-            key={pageNumber}
-            onClick={() => onPageChange(pageNumber)}
+    <nav className="management-pagination" aria-label="Paginação">
+      {onPageSizeChange ? (
+        <label className="management-pagination__size">
+          <select
+            aria-label="Número de registos por página"
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
           >
-            {pageNumber}
-          </button>
-        ))}
-      </div>
+            {availablePageSizes.map((size) => <option value={size} key={size}>{size} por página</option>)}
+          </select>
+          <ChevronDown size={16} aria-hidden="true" />
+        </label>
+      ) : null}
       <button
-        className="pagination-edge"
+        className="management-pagination__arrow"
         type="button"
-        disabled={page === totalPages}
-        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+        aria-label="Página anterior"
+        title="Página anterior"
+        disabled={safePage === 1}
+        onClick={() => onPageChange(Math.max(1, safePage - 1))}
       >
-        Próximo <ArrowRight size={18} />
+        <ChevronLeft size={18} aria-hidden="true" />
+      </button>
+      <span
+        className="management-pagination__current"
+        aria-current="page"
+        aria-label={`Página ${safePage} de ${totalPages}`}
+        title={`Página ${safePage} de ${totalPages}`}
+      >
+        {safePage}
+      </span>
+      <button
+        className="management-pagination__arrow"
+        type="button"
+        aria-label="Próxima página"
+        title="Próxima página"
+        disabled={safePage === totalPages}
+        onClick={() => onPageChange(Math.min(totalPages, safePage + 1))}
+      >
+        <ChevronRight size={18} aria-hidden="true" />
       </button>
     </nav>
   )

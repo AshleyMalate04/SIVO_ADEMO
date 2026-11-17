@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Requests\Api\SettingRequest;
 use App\Http\Requests\Auth\UpdateEmailRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
+use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\AuditService;
@@ -48,6 +49,18 @@ class SettingController extends CrudController
         return ApiResponse::success($user, 'Email actualizado com sucesso.');
     }
 
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $user = User::findOrFail($request->user()->id);
+        $user->update($request->validated());
+        AuditService::record($request, 'PERFIL_ACTUALIZADO', 'User', $user->id);
+
+        return ApiResponse::success(
+            $user->fresh()->load('delegation', 'setting'),
+            'Dados pessoais actualizados com sucesso.'
+        );
+    }
+
     public function updatePassword(UpdatePasswordRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -58,25 +71,11 @@ class SettingController extends CrudController
             $passwordMatches = false;
         }
 
-        $user = User::findOrFail($request->user()->id);
-
         if (! $passwordMatches) {
-            // Evita falso erro quando o utilizador clica duas vezes ou quando a senha
-            // já foi gravada numa primeira tentativa.
-            if (Hash::check($data['password'], $user->password)) {
-                $user->forceFill(['password_changed_at' => now()])->save();
-                app(NotificationService::class)->notifyPasswordChanged($user->fresh());
-
-                return ApiResponse::success([
-                    'must_change_password' => false,
-                    'password_changed_at' => $user->password_changed_at,
-                    'user' => $user->fresh(),
-                ], 'Palavra-passe actualizada com sucesso.');
-            }
-
             return ApiResponse::error('Palavra-passe actual incorrecta.', 422);
         }
 
+        $user = User::findOrFail($request->user()->id);
         $user->forceFill([
             'password' => Hash::make($data['password']),
             'password_changed_at' => now(),

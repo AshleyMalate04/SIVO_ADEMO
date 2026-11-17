@@ -1,4 +1,4 @@
-export default function Loading({ label = 'Carregando...' }) {
+export default function Loading({ label = 'A carregar...' }) {
   return (
     <div className="loading-state" role="status" aria-live="polite">
       <span></span>

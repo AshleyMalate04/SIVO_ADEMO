@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\Api\NotificationRequest;
 use App\Models\Notification;
+use App\Services\AuditService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -61,6 +62,11 @@ class NotificationController extends CrudController
     public function destroy(Request $request, int|string $id): JsonResponse
     {
         $notification = Notification::where('user_id', $request->user()->id)->findOrFail($id);
+        AuditService::modelAction($request, 'ELIMINADO', $notification, [
+            'record_name' => $notification->title,
+            'type' => $notification->type,
+            'snapshot' => $notification->attributesToArray(),
+        ]);
         $notification->delete();
 
         return ApiResponse::success(null, 'Notificação eliminada com sucesso.');

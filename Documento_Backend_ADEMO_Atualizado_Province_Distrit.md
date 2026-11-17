@@ -679,22 +679,11 @@ php artisan make:controller Api/SettingController
 
 | Service | Responsabilidade |
 |---|---|
-| `AuthService` | Login, logout, recuperação de acesso e sessão |
-| `UserService` | Gestão de utilizadores operacionais |
-| `ProvinceService` | Consulta de províncias |
-| `DistritService` | Consulta de distritos por província |
-| `MemberService` | Gestão de membros |
-| `DelegationService` | Gestão de delegações |
-| `OrganService` | Gestão de órgãos |
-| `PositionService` | Gestão de cargos |
-| `ElectionService` | Criação, edição, estados e equipa |
-| `CandidateService` | Registo e validação de candidatos |
-| `ElectionVoterService` | Selecção de eleitores autorizados |
+| `AccessNotificationService` | Credenciais iniciais e envio por email |
 | `VotingService` | Votação, sigilo e bloqueio de duplicidade |
-| `ResultService` | Apuramento, publicação automática e empate |
 | `AuditService` | Registo de acções críticas |
-| `SettingService` | Preferências da conta |
-| `NotificationService` | Notificações do eleitor |
+| `ElectionStatusSyncService` | Sincroniza estados por data/hora |
+| `NotificationService` | Notificações e eventos em tempo real |
 
 ---
 

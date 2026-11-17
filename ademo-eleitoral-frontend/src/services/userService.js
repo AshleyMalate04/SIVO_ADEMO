@@ -28,4 +28,9 @@ export const userService = {
     const response = await api.patch(`/users/${id}/status`, payload)
     return unwrap(response)
   },
+
+  async remove(id) {
+    const response = await api.delete(`/users/${id}`)
+    return unwrap(response)
+  },
 }

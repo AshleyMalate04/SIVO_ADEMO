@@ -1,6 +1,6 @@
 Olá, {{ $name }}
 
-Recebemos um pedido para redefinir a sua palavra-passe no sistema eleitoral ADEMO.
+Recebemos um pedido para redefinir a sua palavra-passe no Sistema de Votação Eleitoral ADEMO.
 
 Código de verificação: {{ $code }}
 

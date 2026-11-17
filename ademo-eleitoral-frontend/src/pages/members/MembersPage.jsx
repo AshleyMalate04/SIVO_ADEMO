@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import PaginationLayout from '../../components/common/PaginationLayout'
 import RowActions from '../../components/common/RowActions'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import { delegationService } from '../../services/delegationService'
 import { memberService } from '../../services/memberService'
 import { useAuth } from '../../hooks/useAuth'
@@ -75,7 +76,7 @@ export default function MembersPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão de Membros</h1>
+        <h1>Gestão de membros</h1>
         <p>Consulte e actualize os dados dos membros habilitados para participar no processo eleitoral.</p>
       </header>
 
@@ -87,7 +88,7 @@ export default function MembersPage() {
       <section className="filters-panel members-filters" aria-label="Filtros de membros">
         <label className="filter-field filter-search">
           <Search size={22} />
-          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar por nome, email, telefone ou delegação" />
+          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar membros..." />
         </label>
         <label className="filter-field">
           <select value={filters.delegation} onChange={(event) => setFilters((current) => ({ ...current, delegation: event.target.value }))}>
@@ -102,6 +103,7 @@ export default function MembersPage() {
             <option value="SUSPENDED">Suspendido</option>
           </select>
         </label>
+        <ClearFiltersButton active={Object.values(filters).some(Boolean)} onClick={() => setFilters({ q: '', status: '', delegation: '' })} />
       </section>
 
       <section className="table-card management-table-card members-table">
@@ -113,10 +115,10 @@ export default function MembersPage() {
                 <tr>
                   <th>Nome</th>
                   <th>Código</th>
-                  <th>Delegação de Origem</th>
+                  <th>Delegação de origem</th>
                   <th>Membro desde</th>
                   <th>Registado por</th>
-                  <th><span className="state-heading">Estado <ArrowDown size={18} /></span></th>
+                  <th>Estado</th>
                   <th>Acções</th>
                 </tr>
               </thead>
@@ -132,7 +134,7 @@ export default function MembersPage() {
                     <td>{member.delegation}</td>
                     <td>{member.registeredAt}</td>
                     <td>{member.registeredBy}</td>
-                    <td><span className={`status-pill ${commonStatusClass(member.rawStatus ?? member.status)}`}><span></span>{member.status}</span></td>
+                    <td><span className={`status-pill ${commonStatusClass(member.rawStatus ?? member.status)}`}>{member.status}</span></td>
                     <td>
                       <RowActions
                         canManage={canManage}
@@ -141,7 +143,7 @@ export default function MembersPage() {
                         details={[
                           ['Nome', member.name],
                           ['Código', member.code],
-                          ['Delegação de Origem', member.delegation],
+                          ['Delegação de origem', member.delegation],
                           ['Email', member.email],
                           ['Contacto', member.contact],
                           ['BI', member.bi],

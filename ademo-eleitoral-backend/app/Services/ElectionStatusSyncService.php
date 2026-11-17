@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Events\EleicaoEstadoActualizado;
 use App\Models\Election;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ElectionStatusSyncService
 {
@@ -15,7 +16,7 @@ class ElectionStatusSyncService
         $now = Carbon::now(config('app.timezone', 'Africa/Maputo'));
         $updated = 0;
 
-        Election::query()
+        $electionIds = Election::query()
             ->where(function ($query) use ($now): void {
                 $query
                     ->where(function ($query) use ($now): void {
@@ -23,8 +24,17 @@ class ElectionStatusSyncService
                     })
                     ->orWhere('status', 'EM_VOTACAO');
             })
-            ->get()
-            ->each(function (Election $election) use ($now, &$updated): void {
+            ->pluck('id');
+
+        foreach ($electionIds as $electionId) {
+            $result = DB::transaction(function () use ($electionId, $now): ?array {
+                // Rele o estado sob bloqueio para nao reverter uma alteracao concorrente.
+                $election = Election::query()->lockForUpdate()->find($electionId);
+
+                if (! $election || ! in_array($election->status, ['PROGRAMADA', 'EM_VOTACAO'], true)) {
+                    return null;
+                }
+
                 $startsAt = $election->starts_at ? Carbon::parse($election->starts_at, config('app.timezone', 'Africa/Maputo')) : null;
                 $endsAt = $election->ends_at ? Carbon::parse($election->ends_at, config('app.timezone', 'Africa/Maputo')) : null;
 
@@ -35,23 +45,35 @@ class ElectionStatusSyncService
                     default => $election->status,
                 };
 
+                $previous = $election->status;
                 if ($status !== $election->status) {
-                    $previous = $election->status;
                     $election->forceFill(['status' => $status])->save();
                     AuditService::system($status === 'CONCLUIDA' ? 'CONCLUIDA' : 'ALTERACAO_AUTOMATICA_DE_ESTADO_DE_ELEICAO', 'Election', $election->id, [
                         'election_id' => $election->id,
                         'previous_status' => $previous,
                         'status' => $status,
                     ]);
-                    $this->notificationService->notifyElectionStatus($election->fresh(), $status);
-                    event(new EleicaoEstadoActualizado($election->fresh(), $previous));
-                    $updated++;
                 }
 
-                if ($status === 'EM_VOTACAO' && $startsAt && $endsAt && $this->shouldNotifyEndingSoon($startsAt, $endsAt, $now)) {
-                    $this->notificationService->notifyElectionEndingSoon($election);
-                }
-            });
+                return [$election->fresh(), $previous, $startsAt, $endsAt, $status !== $previous];
+            }, 5);
+
+            if (! $result) {
+                continue;
+            }
+
+            [$election, $previous, $startsAt, $endsAt, $changed] = $result;
+
+            if ($changed) {
+                $this->notificationService->notifyElectionStatus($election, $election->status);
+                event(new EleicaoEstadoActualizado($election, $previous));
+                $updated++;
+            }
+
+            if ($election->status === 'EM_VOTACAO' && $startsAt && $endsAt && $this->shouldNotifyEndingSoon($startsAt, $endsAt, $now)) {
+                $this->notificationService->notifyElectionEndingSoon($election);
+            }
+        }
 
         return $updated;
     }

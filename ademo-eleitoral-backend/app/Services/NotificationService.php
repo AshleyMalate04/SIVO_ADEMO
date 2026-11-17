@@ -12,6 +12,7 @@ use App\Models\Member;
 use App\Models\Notification;
 use App\Models\User;
 use App\Notifications\AdemoEmailNotification;
+use App\Support\FrontendUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -226,13 +227,11 @@ class NotificationService
 
     private function actionUrl(?Election $election = null): string
     {
-        $baseUrl = rtrim((string) env('FRONTEND_URL', config('app.url')), '/');
-
         if (! $election) {
-            return "{$baseUrl}/notificacoes";
+            return FrontendUrl::to('/notificacoes');
         }
 
-        return "{$baseUrl}/portal-eleitor/votacoes/{$election->id}";
+        return FrontendUrl::to("/portal-eleitor/votacoes/{$election->id}");
     }
 
     private function hasElectionNotification(int $electionId, string $title, string $message): bool

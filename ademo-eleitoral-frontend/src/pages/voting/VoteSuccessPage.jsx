@@ -1,21 +1,34 @@
-﻿import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
 
 export default function VoteSuccessPage() {
+  const { state } = useLocation()
+  const receiptCode = state?.receiptCode
+  const electionTitle = state?.electionTitle
+  const resultsPath = state?.electionId
+    ? `/portal-eleitor/resultados?eleicao=${state.electionId}`
+    : '/portal-eleitor/resultados'
+
   return (
     <section className="voter-page vote-success-page">
       <div className="vote-success-card">
-        <div className="success-icon"><CheckCircle2 size={74} /></div>
-        <h1>Voto registado com sucesso</h1>
-        <p>O seu voto foi registado no sistema para Eleição para Presidente da Mesa da Assembleia 2026.</p>
-        <div className="receipt-card">
-          <span>Comprovativo</span>
-          <strong>ADEMO-2026-X9F2A1</strong>
-          <p>Este código confirma a sua participação, mas não revela a sua escolha.</p>
-        </div>
+        <div className="success-icon"><CheckCircle2 size={56} /></div>
+        <h1>Voto registado</h1>
+        <p>
+          {electionTitle
+            ? `O seu voto na eleição "${electionTitle}" foi registado no sistema.`
+            : 'O seu voto foi registado no sistema.'}
+        </p>
+        {receiptCode ? (
+          <div className="receipt-card">
+            <span>Comprovativo</span>
+            <strong>{receiptCode}</strong>
+            <p>Este código confirma a sua participação, mas não revela a sua escolha. Guarde-o se precisar de comprovar que votou.</p>
+          </div>
+        ) : null}
         <div className="form-actions">
-          <Link className="secondary-button" to="/portal-eleitor/votacoes">Voltar ao painel</Link>
-          <Link className="primary-action-button" to="/portal-eleitor/resultados">Ver resultados desta eleição</Link>
+          <Link className="secondary-button" to="/portal-eleitor/votacoes">Voltar às eleições</Link>
+          <Link className="primary-action-button" to={resultsPath}>Ver resultados</Link>
         </div>
       </div>
     </section>

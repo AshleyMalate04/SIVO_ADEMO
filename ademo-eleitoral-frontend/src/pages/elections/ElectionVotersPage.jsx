@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import PaginationLayout from '../../components/common/PaginationLayout'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import RowActions from '../../components/common/RowActions'
 import { delegationService } from '../../services/delegationService'
 import { electionService } from '../../services/electionService'
@@ -11,6 +12,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { notify } from '../../utils/notify'
 import { canCreateResource, canManageResource, canMutateStatus } from '../../utils/rolePermissions'
 import { commonStatusClass, normalizeId, normalizeStatus, onlyActive, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { useElectionRealtime } from '../../hooks/useElectionRealtime'
 
 const statusLabel = (status) => ({
   AUTHORIZED: 'Autorizado',
@@ -72,6 +74,21 @@ export default function ElectionVotersPage() {
       .finally(() => setLoading(false))
   }, [selectedElection])
 
+  const refreshVoters = useCallback(() => {
+    if (!selectedElection) return
+
+    voterService.byElection(selectedElection)
+      .then((records) => setVoters(records.map(normalizeVoter)))
+      .catch(() => {
+        // Actualizacoes em tempo real nao devem interromper a utilizacao da pagina.
+      })
+  }, [selectedElection])
+
+  useElectionRealtime(selectedElection, {
+    onResultUpdated: refreshVoters,
+    onStatusUpdated: refreshVoters,
+  })
+
   const filteredVoters = useMemo(() => {
     const term = query.trim().toLowerCase()
 
@@ -105,7 +122,7 @@ export default function ElectionVotersPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão de Eleitores</h1>
+        <h1>Gestão de eleitores</h1>
         <p>Consulte os membros seleccionados como eleitores autorizados para cada eleição.</p>
       </header>
 
@@ -119,7 +136,7 @@ export default function ElectionVotersPage() {
       <section className="filters-panel two-filter-panel" aria-label="Filtros de eleitores">
         <label className="filter-field filter-search">
           <Search size={22} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar por nome, email ou telefone" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar eleitores..." />
         </label>
         <label className="filter-field">
           <select value={delegationFilter} onChange={(event) => setDelegationFilter(event.target.value)}>
@@ -135,6 +152,10 @@ export default function ElectionVotersPage() {
             <option value="REMOVED">Removido</option>
           </select>
         </label>
+        <ClearFiltersButton
+          active={Boolean(query || delegationFilter || statusFilter)}
+          onClick={() => { setQuery(''); setDelegationFilter(''); setStatusFilter('') }}
+        />
       </section>
 
       <section className="selection-panel">
@@ -161,12 +182,12 @@ export default function ElectionVotersPage() {
                 <thead>
                   <tr>
                     <th>Nome</th>
-                    <th>Delegação de Origem</th>
+                    <th>Delegação de origem</th>
                     <th>Código</th>
                     <th>Eleição</th>
                     <th>Contacto</th>
                     <th>Já votou</th>
-                    <th><span className="state-heading">Estado <ArrowDown size={18} /></span></th>
+                    <th>Estado</th>
                     <th>Acções</th>
                   </tr>
                 </thead>
@@ -183,7 +204,7 @@ export default function ElectionVotersPage() {
                       <td>{voter.election}</td>
                       <td>{voter.contact}</td>
                       <td>{voter.voted}</td>
-                      <td><span className={`status-pill ${commonStatusClass(voter.rawStatus)}`}><span></span>{voter.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(voter.rawStatus)}`}>{voter.status}</span></td>
                       <td>
                         <RowActions
                           canManage={canManage}
@@ -191,7 +212,7 @@ export default function ElectionVotersPage() {
                           isInactive={voter.rawStatus === 'SUSPENDED'}
                           details={[
                             ['Nome', voter.name],
-                            ['Delegação de Origem', voter.delegation],
+                            ['Delegação de origem', voter.delegation],
                             ['Código', voter.code],
                             ['Eleição', voter.election],
                             ['Contacto', voter.contact],

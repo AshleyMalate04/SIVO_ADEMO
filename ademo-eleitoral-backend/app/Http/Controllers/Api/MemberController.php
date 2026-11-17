@@ -9,8 +9,10 @@ use App\Services\AccessNotificationService;
 use App\Services\AuditService;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MemberController extends CrudController
 {
@@ -70,20 +72,27 @@ class MemberController extends CrudController
         if ($memberId) {
             $member = Member::find($memberId);
             if ($member) {
+                $initialPassword = AccessNotificationService::generateInitialPassword();
                 $user = User::firstOrCreate(
                     ['access_code' => $member->member_code],
                     [
                         'name' => $member->name,
                         'email' => $member->email,
                         'phone' => $member->phone,
-                        'password' => AccessNotificationService::DEFAULT_PASSWORD,
+                        'password' => $initialPassword,
                         'role' => 'ELEITOR',
                         'status' => $member->status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
                         'delegation_id' => $member->delegation_id,
                     ]
                 );
 
-                $emailSent = AccessNotificationService::notifyInitialAccess($user);
+                $emailSent = $user->wasRecentlyCreated
+                    ? AccessNotificationService::notifyInitialAccess($user, $initialPassword)
+                    : false;
+                if ($user->wasRecentlyCreated && ! $emailSent) {
+                    $payload['data']['initial_password'] = $initialPassword;
+                    $response->setData($payload);
+                }
                 AuditService::record($request, 'CONTA_DE_ELEITOR_CRIADA', 'User', $user->id, [
                     'member_id' => $member->id,
                     'access_code' => $user->access_code,
@@ -99,13 +108,37 @@ class MemberController extends CrudController
     public function destroy(Request $request, int|string $id): JsonResponse
     {
         $member = Member::findOrFail($id);
-        $member->update(['status' => 'INACTIVE']);
 
-        User::where('access_code', $member->member_code)->update(['status' => 'INACTIVE']);
+        try {
+            DB::transaction(function () use ($request, $member): void {
+                $linkedUser = User::where('access_code', $member->member_code)->first();
 
-        AuditService::modelAction($request, 'OCULTADO', $member, ['status' => 'INACTIVE']);
+                if ($linkedUser) {
+                    AuditService::modelAction($request, 'ELIMINADO', $linkedUser, [
+                        'record_name' => $linkedUser->name,
+                        'status' => $linkedUser->status,
+                        'access_code' => $linkedUser->access_code,
+                        'snapshot' => $linkedUser->attributesToArray(),
+                    ]);
+                    $linkedUser->delete();
+                }
 
-        return ApiResponse::success($member, 'Membro eliminado com sucesso.');
+                AuditService::modelAction($request, 'ELIMINADO', $member, [
+                    'record_name' => $member->name,
+                    'status' => $member->status,
+                    'member_code' => $member->member_code,
+                    'snapshot' => $member->attributesToArray(),
+                ]);
+                $member->delete();
+            });
+        } catch (QueryException) {
+            return ApiResponse::error(
+                'Nao e possivel eliminar este membro porque existem candidaturas, votos ou eleicoes associadas. Suspenda o membro se precisar impedir novas operacoes.',
+                422,
+            );
+        }
+
+        return ApiResponse::success(null, 'Membro eliminado com sucesso.');
     }
 
     public function import(): JsonResponse

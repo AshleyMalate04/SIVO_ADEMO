@@ -35,15 +35,9 @@ COPY --from=vendor /app/vendor ./vendor
 COPY . .
 
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    && chmod +x docker/render-start.sh
 
 EXPOSE 10000
 
-CMD php artisan migrate --force \
-    && (php artisan storage:link >/dev/null 2>&1 || true) \
-    && php artisan package:discover --ansi \
-    && php artisan optimize:clear \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache \
-    && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+CMD ["docker/render-start.sh"]

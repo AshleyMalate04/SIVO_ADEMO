@@ -8,7 +8,6 @@ import { onlyActive } from '../../utils/statusFilters'
 
 const uppercaseName = (value) => value.replace(/\s+/g, ' ').toLocaleUpperCase('pt-PT')
 const hasTwoWords = (value) => value.trim().split(/\s+/).length >= 2
-
 export default function OperationalUserFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -26,9 +25,11 @@ export default function OperationalUserFormPage() {
   useEffect(() => {
     if (!isEditing) return
     userService.show(id)
-      .then(setUser)
+      .then((record) => setUser({ ...record, role: record.role === 'COMMISSION' ? 'COMISSAO' : record.role }))
       .catch((error) => notify.error('Não foi possível carregar o utilizador.', error.response?.data?.message || 'Verifique a API.'))
   }, [id, isEditing])
+
+  const selectedRole = user?.role === 'COMMISSION' ? 'COMISSAO' : (user?.role ?? '')
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -38,13 +39,13 @@ export default function OperationalUserFormPage() {
       access_code: formData.get('access_code')?.trim(),
       delegation_id: formData.get('delegation_id') ? Number(formData.get('delegation_id')) : null,
       phone: formData.get('phone')?.trim() || null,
-      email: formData.get('email')?.trim() || null,
+      email: formData.get('email')?.trim().toLowerCase() || '',
       role: formData.get('role'),
       status: user?.status === 'BLOCKED' ? 'SUSPENDED' : (user?.status ?? 'ACTIVE'),
     }
 
-    if (!payload.name || !payload.access_code || !payload.delegation_id || !payload.phone || !payload.role) {
-      notify.error('Campos obrigatórios.', 'Preencha todos os campos obrigatórios. Apenas o email é opcional.')
+    if (!payload.name || !payload.access_code || !payload.delegation_id || !payload.phone || !payload.email || !payload.role) {
+      notify.error('Campos obrigatórios.', 'Preencha todos os campos obrigatórios, incluindo o email.')
       return
     }
 
@@ -58,10 +59,19 @@ export default function OperationalUserFormPage() {
       return
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      notify.error('Email inválido.', 'Informe um email válido.')
+      return
+    }
+
     try {
       setSaving(true)
-      if (isEditing) await userService.update(id, payload)
-      else await userService.create(payload)
+      const savedUser = isEditing
+        ? await userService.update(id, payload)
+        : await userService.create(payload)
+      if (savedUser?.initial_password) {
+        notify.warning('Email não enviado.', `Partilhe estes dados de acesso manualmente: ${savedUser.access_code} / ${savedUser.initial_password}`)
+      }
       notify.success(isEditing ? 'Dados do utilizador alterados.' : 'Utilizador registado com sucesso.')
       navigate('/comissao-fiscal')
     } catch (error) {
@@ -74,8 +84,8 @@ export default function OperationalUserFormPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão Comissão e Fiscal</h1>
-        <p>{isEditing ? 'Altere os dados do utilizador seleccionado.' : 'Registe membros da comissão ou fiscais. A palavra-passe inicial será 12345678 e, se houver email, o sistema enviará os dados de acesso.'}</p>
+        <h1>Gestão da comissão e fiscais</h1>
+        <p>{isEditing ? 'Altere os dados do utilizador seleccionado.' : 'Registe membros da comissão ou fiscais. A palavra-passe inicial é 12345678 e deverá ser substituída no primeiro acesso.'}</p>
       </header>
 
       <div className="mode-tabs" aria-label="Modo de gestão">
@@ -87,14 +97,10 @@ export default function OperationalUserFormPage() {
         <div className="form-grid two-columns">
           <label className="form-field">
             <span>Nome</span>
-            <input name="name" required defaultValue={user?.name ?? ''} onInput={(event) => { event.currentTarget.value = uppercaseName(event.currentTarget.value) }} />
-          </label>
-          <label className="form-field">
-            <span>Código de acesso</span>
-            <input name="access_code" required defaultValue={user?.access_code ?? ''} />
+            <input name="name" required placeholder="Nome completo" defaultValue={user?.name ?? ''} onInput={(event) => { event.currentTarget.value = uppercaseName(event.currentTarget.value) }} />
           </label>
           <label className="form-field select-field">
-            <span>Delegação de Origem</span>
+            <span>Delegação de origem</span>
             <select name="delegation_id" required value={user?.delegation_id ?? ''} onChange={(event) => setUser((current) => ({ ...(current ?? {}), delegation_id: event.target.value }))}>
               <option value="">Seleccione a delegação</option>
               {delegations.map((delegation) => <option key={delegation.id} value={delegation.id}>{delegation.name}</option>)}
@@ -102,11 +108,11 @@ export default function OperationalUserFormPage() {
           </label>
           <label className="form-field">
             <span>Telefone</span>
-            <input name="phone" required defaultValue={user?.phone ?? ''} />
+            <input name="phone" required inputMode="numeric" placeholder="84XXXXXXX" defaultValue={user?.phone ?? ''} />
           </label>
           <label className="form-field">
             <span>Email</span>
-            <input name="email" data-optional="true" type="email" defaultValue={user?.email ?? ''} />
+            <input name="email" type="email" required autoComplete="email" placeholder="nome@exemplo.com" defaultValue={user?.email ?? ''} />
           </label>
           <label className="form-field select-field">
             <span>Perfil</span>
@@ -116,10 +122,14 @@ export default function OperationalUserFormPage() {
               <option value="COMISSAO">Comissão</option>
             </select>
           </label>
+          <label className="form-field">
+            <span>Código de acesso</span>
+            <input name="access_code" required defaultValue={user?.access_code ?? ''} placeholder={selectedRole === 'FISCAL' ? 'Ex.: FIS-0002' : selectedRole === 'COMISSAO' ? 'Ex.: COM-0002' : 'Introduza o código...'} />
+          </label>
         </div>
 
         {!isEditing ? (
-          <p className="form-help-text">A palavra-passe inicial será <strong>12345678</strong>. O utilizador poderá alterá-la em Configurações após a primeira sessão.</p>
+          <p className="form-help-text">Palavra-passe inicial: <strong>12345678</strong>. O utilizador deverá definir uma palavra-passe pessoal no primeiro acesso.</p>
         ) : null}
 
         <div className="form-footer">

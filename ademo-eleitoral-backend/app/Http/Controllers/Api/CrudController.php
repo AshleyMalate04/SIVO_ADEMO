@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Services\AuditService;
 use App\Support\ApiResponse;
 use App\Support\StatusNormalizer;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
@@ -71,7 +73,7 @@ abstract class CrudController extends Controller
     {
         $data = $this->prepareData($this->validated($request));
         $record = $this->model::create($data);
-        AuditService::modelAction($request, $this->auditAction('CREATE', $record), $record, ['fields' => array_keys($data)]);
+        AuditService::modelAction($request, $this->auditAction('CREATE', $record), $record, $this->auditDetailsForCreate($record));
 
         return ApiResponse::success($record->load($this->with), 'Registo criado com sucesso.', 201);
     }
@@ -91,7 +93,7 @@ abstract class CrudController extends Controller
         $data = $this->prepareData($this->validated($request), $record);
 
         $record->update($data);
-        AuditService::modelAction($request, $this->auditAction('UPDATE', $record), $record, ['fields' => array_keys($data)]);
+        AuditService::modelAction($request, $this->auditAction('UPDATE', $record), $record, $this->auditDetailsForUpdate($record, $data));
 
         return ApiResponse::success($record->fresh($this->with), 'Registo actualizado com sucesso.');
     }
@@ -100,15 +102,17 @@ abstract class CrudController extends Controller
     {
         $record = $this->model::findOrFail($id);
 
-        if (Schema::hasColumn($record->getTable(), 'status')) {
-            $record->forceFill(['status' => 'INACTIVE'])->save();
-            AuditService::modelAction($request, $this->auditAction('DELETE', $record), $record, ['status' => 'INACTIVE']);
-
-            return ApiResponse::success(null, 'Registo ocultado com sucesso.');
+        try {
+            DB::transaction(function () use ($request, $record): void {
+                AuditService::modelAction($request, $this->auditAction('DELETE', $record), $record, $this->auditDetailsForDelete($record));
+                $record->delete();
+            });
+        } catch (QueryException) {
+            return ApiResponse::error(
+                'Nao e possivel eliminar este registo porque existem dados associados. Remova primeiro as dependencias ou suspenda o registo.',
+                422,
+            );
         }
-
-        $record->delete();
-        AuditService::modelAction($request, $this->auditAction('DELETE', $record), $record);
 
         return ApiResponse::success(null, 'Registo eliminado com sucesso.');
     }
@@ -150,7 +154,7 @@ abstract class CrudController extends Controller
         $entity = class_basename($record);
 
         if ($action === 'DELETE') {
-            return 'OCULTADO';
+            return 'ELIMINADO';
         }
 
         return match ([$action, $entity]) {
@@ -159,6 +163,52 @@ abstract class CrudController extends Controller
             ['CREATE', 'Candidate'] => 'SELECCAO_DE_CANDIDATO',
             default => $action,
         };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function auditDetailsForCreate(Model $record): array
+    {
+        return [
+            'record_name' => $this->recordDisplayName($record),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function auditDetailsForUpdate(Model $record, array $data): array
+    {
+        return [
+            'record_name' => $this->recordDisplayName($record),
+            'fields' => array_keys($data),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function auditDetailsForDelete(Model $record): array
+    {
+        return [
+            'record_name' => $this->recordDisplayName($record),
+            'status' => $record->getAttribute('status'),
+            'snapshot' => $record->attributesToArray(),
+        ];
+    }
+
+    protected function recordDisplayName(Model $record): string
+    {
+        foreach (['name', 'title', 'member_code', 'access_code', 'email', 'description'] as $attribute) {
+            $value = $record->getAttribute($attribute);
+            if ($value !== null && $value !== '') {
+                return (string) $value;
+            }
+        }
+
+        return class_basename($record).' #'.$record->getKey();
     }
 
     /**

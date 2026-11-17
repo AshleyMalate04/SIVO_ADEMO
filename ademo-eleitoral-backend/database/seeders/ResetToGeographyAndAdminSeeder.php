@@ -54,6 +54,7 @@ class ResetToGeographyAndAdminSeeder extends Seeder
             ProvinceSeeder::class,
             DistritSeeder::class,
             UserSeeder::class,
+            DemoDataSeeder::class,
         ]);
     }
 }

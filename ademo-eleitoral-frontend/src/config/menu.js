@@ -7,7 +7,7 @@ import {
   FileText,
   Gavel,
   LayoutGrid,
-  Settings,
+  CircleUserRound,
   UserCog,
   Users,
 } from "lucide-react";
@@ -113,9 +113,9 @@ export const menuItems = [
   },
   {
     key: "settings",
-    label: "Configurações",
-    path: "/configuracoes",
-    icon: Settings,
+    label: "Meu perfil",
+    path: "/perfil",
+    icon: CircleUserRound,
     roles: ["ADMIN", "COMISSAO", "COMMISSION", "FISCAL", "ELEITOR", "VOTER"],
   },
 ];

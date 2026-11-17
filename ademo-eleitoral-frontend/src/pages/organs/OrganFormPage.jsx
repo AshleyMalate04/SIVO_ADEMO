@@ -108,7 +108,7 @@ export default function OrganFormPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão de Órgãos e Cargos</h1>
+        <h1>Gestão de órgãos e cargos</h1>
         <p>{isEditing ? 'Altere o órgão e os seus cargos.' : 'Estrutura eleitoral dinâmica e configurável.'}</p>
       </header>
 
@@ -133,7 +133,7 @@ export default function OrganFormPage() {
           <h2>Cargos</h2>
           <label className="form-field role-input">
             <span>Novo cargo</span>
-            <input data-optional="true" value={newPosition} onChange={(event) => setNewPosition(event.target.value)} onKeyDown={(event) => {
+            <input data-optional="true" placeholder="Nome do cargo" value={newPosition} onChange={(event) => setNewPosition(event.target.value)} onKeyDown={(event) => {
               if (event.key === 'Enter') {
                 event.preventDefault()
                 addPosition()
@@ -148,7 +148,7 @@ export default function OrganFormPage() {
           <div className="role-list">
             {positions.map((position, index) => position.removed ? null : (
               <div className="role-row editable-role-row" key={`${position.id ?? 'new'}-${index}`}>
-                <input value={position.name} onChange={(event) => updatePositionName(index, event.target.value)} aria-label="Nome do cargo" />
+                <input value={position.name} placeholder="Nome do cargo" onChange={(event) => updatePositionName(index, event.target.value)} aria-label="Nome do cargo" />
                 <button type="button" aria-label={`Eliminar ${position.name}`} onClick={() => removePosition(index)}>
                   <Trash2 size={20} />
                 </button>

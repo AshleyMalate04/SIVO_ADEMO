@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Send, ShieldCheck } from 'lucide-react'
 import Loading from '../../components/common/Loading'
@@ -18,7 +18,7 @@ export default function PhysicalResultsPage() {
   const [totals, setTotals] = useState({})
   const [approved, setApproved] = useState(false)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const [electionRecord, candidateRecords, physical] = await Promise.all([
@@ -39,13 +39,13 @@ export default function PhysicalResultsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
-  useEffect(() => { loadData() }, [id])
+  useEffect(() => { loadData() }, [loadData])
 
   useElectionRealtime(id, {
-    onResultUpdated: () => loadData(),
-    onStatusUpdated: () => loadData(),
+    onResultUpdated: loadData,
+    onStatusUpdated: loadData,
   })
 
   const totalVotes = useMemo(() => Object.values(totals).reduce((sum, value) => sum + Number(value || 0), 0), [totals])

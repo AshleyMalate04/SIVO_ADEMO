@@ -148,7 +148,7 @@ export default function VerifyCodePage() {
       <div className="auth-copy">
         <h2>Verificação de identidade</h2>
         <p>
-          Enviamos um código de segurança para o seu email
+          Enviámos um código de segurança para o seu email
           <br />
           <strong>{email || 'email informado'}</strong>
         </p>

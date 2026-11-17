@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
       await forgotPassword({ email: email.trim() })
       sessionStorage.setItem('ademo_reset_email', email.trim())
       setSuccess(true)
-      notify.success('Pedido enviado.', 'Enviamos um código de segurança para o email informado.')
+      notify.success('Pedido enviado.', 'Enviámos um código de segurança para o email informado.')
       window.setTimeout(() => navigate('/verificar-codigo'), 750)
     } catch (requestError) {
       const message = requestError.response?.data?.message || 'Não foi possível enviar o código. Tente novamente.'
@@ -52,18 +52,18 @@ export default function ForgotPasswordPage() {
     <form className="auth-form" onSubmit={handleSubmit} noValidate>
       <div className="auth-copy">
         <h2>Recuperar acesso</h2>
-        <p>Introduza o seu email</p>
+        <p>Introduza o email associado à sua conta no sistema.</p>
       </div>
 
       {success ? (
         <FeedbackCard
           title="Pedido enviado"
-          message="Enviamos um código de segurança para o email informado."
+          message="Enviámos um código de segurança para o email informado."
         />
       ) : null}
 
       <label className="form-field">
-        <span>EMAIL</span>
+        <span>Email registado</span>
         <input
           aria-invalid={Boolean(error)}
           name="email"
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
             setEmail(event.target.value)
             setError('')
           }}
-          placeholder="exemplo@gmail.com"
+          placeholder="nome@exemplo.com..."
           type="email"
           value={email}
         />

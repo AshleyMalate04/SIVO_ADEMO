@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import FeedbackCard from '../../components/common/FeedbackCard'
 import FormError from '../../components/common/FormError'
 import { resetPassword } from '../../services/authService'
@@ -16,12 +17,15 @@ export default function ResetPasswordPage() {
   const resetEmail = searchParams.get('email') || sessionStorage.getItem('ademo_reset_email') || ''
   const resetCode = sessionStorage.getItem('ademo_reset_code') || ''
   const [values, setValues] = useState({
+    currentPassword: '',
     password: '',
     passwordConfirmation: '',
   })
   const [errors, setErrors] = useState({})
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false)
 
   function updateField(event) {
     const { name, value } = event.target
@@ -38,8 +42,16 @@ export default function ResetPasswordPage() {
       nextErrors.form = 'Confirme primeiro o código enviado para o seu email.'
     }
 
+    if (firstAccess && !values.currentPassword) {
+      nextErrors.currentPassword = 'Informe a palavra-passe inicial recebida.'
+    }
+
     if (values.password.length < 8) {
       nextErrors.password = 'A nova palavra-passe deve ter pelo menos 8 caracteres.'
+    }
+
+    if (firstAccess && values.password === values.currentPassword) {
+      nextErrors.password = 'Defina uma palavra-passe diferente da palavra-passe inicial.'
     }
 
     if (values.passwordConfirmation !== values.password) {
@@ -58,7 +70,7 @@ export default function ResetPasswordPage() {
     try {
       if (firstAccess) {
         await settingService.updatePassword({
-          current_password: '12345678',
+          current_password: values.currentPassword,
           password: values.password,
           password_confirmation: values.passwordConfirmation,
         })
@@ -97,7 +109,7 @@ export default function ResetPasswordPage() {
     <form className="auth-form" onSubmit={handleSubmit} noValidate>
       <div className="auth-copy">
         <h2>{firstAccess ? 'Definir palavra-passe' : 'Nova palavra-passe'}</h2>
-        <p>{firstAccess ? 'Defina a palavra-passe que pretende usar na plataforma. Pode manter a palavra-passe inicial, caso seja essa a sua escolha.' : 'Crie uma palavra-passe forte para proteger a segurança da sua conta.'}</p>
+        <p>{firstAccess ? 'Defina a sua palavra-passe pessoal. Ela deve ser diferente da palavra-passe inicial recebida.' : 'Crie uma palavra-passe forte para proteger a segurança da sua conta.'}</p>
       </div>
 
       {success ? (
@@ -109,29 +121,60 @@ export default function ResetPasswordPage() {
 
       <FormError message={errors.form} />
 
+      {firstAccess ? (
+        <label className="form-field">
+          <span>PALAVRA-PASSE INICIAL</span>
+          <input
+            aria-invalid={Boolean(errors.currentPassword)}
+            autoComplete="current-password"
+            name="currentPassword"
+            onChange={updateField}
+            type="password"
+            value={values.currentPassword}
+          />
+          <FormError message={errors.currentPassword} />
+        </label>
+      ) : null}
+
       <label className="form-field">
         <span>NOVA PALAVRA-PASSE</span>
-        <input
-          aria-invalid={Boolean(errors.password)}
-          name="password"
-          onChange={updateField}
-          placeholder="........"
-          type="password"
-          value={values.password}
-        />
+        <div className="password-field">
+          <input
+            aria-invalid={Boolean(errors.password)}
+            name="password"
+            onChange={updateField}
+            type={showPassword ? 'text' : 'password'}
+            value={values.password}
+          />
+          <button
+            type="button"
+            aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+            onClick={() => setShowPassword((current) => !current)}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
         <FormError message={errors.password} />
       </label>
 
       <label className="form-field">
         <span>CONFIRMAR</span>
-        <input
-          aria-invalid={Boolean(errors.passwordConfirmation)}
-          name="passwordConfirmation"
-          onChange={updateField}
-          placeholder="........"
-          type="password"
-          value={values.passwordConfirmation}
-        />
+        <div className="password-field">
+          <input
+            aria-invalid={Boolean(errors.passwordConfirmation)}
+            name="passwordConfirmation"
+            onChange={updateField}
+            type={showPasswordConfirmation ? 'text' : 'password'}
+            value={values.passwordConfirmation}
+          />
+          <button
+            type="button"
+            aria-label={showPasswordConfirmation ? 'Ocultar senha' : 'Mostrar senha'}
+            onClick={() => setShowPasswordConfirmation((current) => !current)}
+          >
+            {showPasswordConfirmation ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
         <FormError message={errors.passwordConfirmation} />
       </label>
 

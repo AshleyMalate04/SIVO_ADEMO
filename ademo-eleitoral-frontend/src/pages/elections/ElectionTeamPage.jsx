@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom'
 import { Plus, Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import PaginationLayout from '../../components/common/PaginationLayout'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import RowActions from '../../components/common/RowActions'
-import { delegationService } from '../../services/delegationService'
 import { electionService } from '../../services/electionService'
 import { useAuth } from '../../hooks/useAuth'
 import { notify } from '../../utils/notify'
-import { commonStatusClass, normalizeId, onlyActive, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { commonStatusClass, normalizeId, searchText as normalizeSearchText } from '../../utils/statusFilters'
 
 const roleLabel = (role) => ({
   COMISSAO: 'Comissão',
@@ -35,16 +35,14 @@ export default function ElectionTeamPage() {
   const { role } = useAuth()
   const canManage = role === 'COMMISSION' || role === 'COMISSAO'
   const [records, setRecords] = useState([])
-  const [delegations, setDelegations] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({ q: '', election: '', profile: '', delegation: '' })
+  const [filters, setFilters] = useState({ q: '', election: '', profile: '' })
 
   const loadTeam = () => {
     setLoading(true)
-    Promise.all([electionService.list(), delegationService.list()])
-      .then(([elections, delegationRecords]) => {
+    electionService.list()
+      .then((elections) => {
         setRecords(elections.flatMap(normalizeTeam))
-        setDelegations(onlyActive(delegationRecords))
       })
       .catch((error) => notify.error('Não foi possível carregar a equipa da eleição.', error.response?.data?.message || 'Verifique a API.'))
       .finally(() => setLoading(false))
@@ -64,9 +62,7 @@ export default function ElectionTeamPage() {
         .some((value) => normalizeSearchText(value).includes(term))
       const matchesElection = !filters.election || String(record.electionId) === String(filters.election)
       const matchesProfile = !filters.profile || record.profile === filters.profile
-      const matchesDelegation = !filters.delegation || String(record.delegationId) === String(filters.delegation)
-
-      return matchesTerm && matchesElection && matchesProfile && matchesDelegation
+      return matchesTerm && matchesElection && matchesProfile
     })
   }, [filters, records])
 
@@ -97,7 +93,7 @@ export default function ElectionTeamPage() {
           <input
             value={filters.q}
             onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
-            placeholder="Pesquisar por nome, perfil ou eleição"
+            placeholder="Pesquisar equipa..."
           />
         </label>
         <label className="filter-field">
@@ -113,12 +109,7 @@ export default function ElectionTeamPage() {
             <option>Fiscal</option>
           </select>
         </label>
-        <label className="filter-field">
-          <select value={filters.delegation} onChange={(event) => setFilters((current) => ({ ...current, delegation: event.target.value }))}>
-            <option value="">Todas as delegações</option>
-            {delegations.map((delegation) => <option key={delegation.id} value={delegation.id}>{delegation.name}</option>)}
-          </select>
-        </label>
+        <ClearFiltersButton active={Object.values(filters).some(Boolean)} onClick={() => setFilters({ q: '', election: '', profile: '' })} />
       </section>
 
       <section className="table-card management-table-card">
@@ -133,7 +124,7 @@ export default function ElectionTeamPage() {
                     <th>Nome</th>
                     <th>Perfil</th>
                     <th>Eleição</th>
-                    <th>Delegação de Origem</th>
+                    <th>Delegação de origem</th>
                     <th>Email</th>
                     <th>Membro desde</th>
                     <th>Estado</th>
@@ -153,7 +144,7 @@ export default function ElectionTeamPage() {
                       <td>{member.delegation}</td>
                       <td>{member.email}</td>
                       <td>{member.createdAt}</td>
-                      <td><span className={`status-pill ${commonStatusClass(member.rawStatus ?? member.status)}`}><span></span>{member.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(member.rawStatus ?? member.status)}`}>{member.status}</span></td>
                       <td>
                         <RowActions
                           canManage={canManage}
@@ -164,7 +155,7 @@ export default function ElectionTeamPage() {
                             ['Nome', member.name],
                             ['Perfil', member.profile],
                             ['Eleição', member.election],
-                            ['Delegação de Origem', member.delegation],
+                            ['Delegação de origem', member.delegation],
                             ['Email', member.email],
                             ['Membro desde', member.createdAt],
                             ['Estado', member.status],

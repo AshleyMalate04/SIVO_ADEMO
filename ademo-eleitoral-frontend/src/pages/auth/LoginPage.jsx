@@ -97,8 +97,8 @@ export default function LoginPage() {
   return (
     <form className="auth-form" onSubmit={handleSubmit} noValidate>
       <div className="auth-copy">
-        <h2>Bem-vindo de volta</h2>
-        <p>Insira as suas credenciais para aceder ao sistema ADEMO.</p>
+        <h2 style={{fontWeight: 'bold', justifyContent: 'center', alignItems: 'center', textAlign: 'center'}}>Bem-vindo de volta</h2>
+        <p style={{ justifyContent: 'center', alignItems: 'center', textAlign: 'center'}}>Use o código de acesso e a palavra-passe atribuídos pela ADEMO.</p>
       </div>
 
       {success ? (
@@ -111,7 +111,7 @@ export default function LoginPage() {
       <FormError message={errors.form} />
 
       <label className="form-field">
-        <span>CÓDIGO</span>
+        <span>Código de acesso</span>
         <input
           aria-invalid={Boolean(errors.access_code)}
           autoComplete="username"
@@ -124,20 +124,19 @@ export default function LoginPage() {
       </label>
 
       <label className="form-field">
-        <span>PALAVRA-PASSE</span>
+        <span>Palavra-passe</span>
         <div className="password-field">
           <input
             aria-invalid={Boolean(errors.password)}
             autoComplete="current-password"
             name="password"
             onChange={updateField}
-            placeholder="........"
             type={showPassword ? "text" : "password"}
             value={values.password}
           />
           <button
             type="button"
-            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+            aria-label={showPassword ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
             onClick={() => setShowPassword((current) => !current)}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -156,7 +155,7 @@ export default function LoginPage() {
           />
           <span>Manter sessão iniciada</span>
         </label>
-        <Link to="/recuperar-acesso">Esqueci a senha</Link>
+        <Link to="/recuperar-acesso">Esqueci a palavra-passe</Link>
       </div>
 
       <button className="primary-button" disabled={loading} type="submit">

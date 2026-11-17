@@ -169,14 +169,12 @@ ademo-backend/
 │   │   ├── Middleware/
 │   │   └── Requests/
 │   ├── Models/
-│   ├── Policies/
 │   ├── Services/
-│   │   ├── AuthService.php
-│   │   ├── ElectionService.php
+│   │   ├── AccessNotificationService.php
+│   │   ├── AuditService.php
+│   │   ├── ElectionStatusSyncService.php
+│   │   ├── NotificationService.php
 │   │   ├── VotingService.php
-│   │   ├── ResultService.php
-│   │   └── AuditService.php
-│   ├── Enums/
 │   └── Notifications/
 ├── database/
 │   ├── migrations/

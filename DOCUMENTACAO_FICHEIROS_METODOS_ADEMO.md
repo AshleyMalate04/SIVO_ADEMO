@@ -104,7 +104,7 @@ Metodos:
 - `auditAction(...)`: traduz operacoes genericas em accoes de auditoria.
 - `validated(Request $request)`: executa o `FormRequest` configurado no controller filho.
 
-Chamado por: `DelegationController`, `DistritController`, `ProvinceController`, `OrganController`, `PositionController`, `MemberController`, `UserController`, `CandidateController`, `VoteController`, `VoteReceiptController`, `ElectionTeamController`, `ElectionVoterController`, `SettingController`.
+Chamado por: `DelegationController`, `DistritController`, `ProvinceController`, `OrganController`, `PositionController`, `MemberController`, `UserController`, `CandidateController`, `ElectionVoterController`, `SettingController`.
 
 Saida esperada: JSON padrao por `ApiResponse`.
 
@@ -254,12 +254,9 @@ Chamado por: `userService`, `OperationalUsersPage`, `OperationalUserFormPage`.
 | `OrganController.php` | gerir orgaos e cargos | `positions`, `storePosition`, `update`, `destroy` | `organService` |
 | `PositionController.php` | gerir cargos | `destroy` | `organService.updatePosition/removePosition` |
 | `ElectionVoterController.php` | gerir eleitores de eleicao | `byElection`, `storeForElection`, `destroyByMember`, `updateStatus`, `credentials` | `voterService` |
-| `ElectionTeamController.php` | controller CRUD de equipa | herda CRUD | usado indirectamente |
 | `NotificationController.php` | listar e marcar notificacoes | `index`, `read`, `readAll`, `destroy` | `notificationService` |
 | `SettingController.php` | preferencias e senha | `current`, `updateCurrent`, `updateEmail`, `updatePassword` | `settingService`, configuracoes |
 | `AuditController.php` | auditoria | `index`, `byElection` e metodos privados de descricao/labels | `auditService`, `AuditPage` |
-| `VoteController.php` | CRUD generico de votos | herda CRUD | API interna/potencial |
-| `VoteReceiptController.php` | CRUD generico de recibos | herda CRUD | API interna/potencial |
 
 ### 2.3 Models
 
@@ -294,13 +291,8 @@ Models representam tabelas e relacoes. Sao chamados pelos controllers e services
 | `ElectionStatusSyncService.php` | actualiza estados por data/hora | `sync` | `ElectionController@index/show`, comando agendado |
 | `NotificationService.php` | cria notificacoes e eventos realtime | `notifyUser`, `notifyElectionAudience`, `notifyElectionStatus`, `notifyElectionEndingSoon`, `usersForElection` | estados, resultados, sync |
 | `ApiResponse.php` | padroniza JSON | `success`, `error` | controllers |
-| `CodeGenerator.php` | gera codigos aleatorios | `make` | criacao de codigos |
 | `StatusNormalizer.php` | normaliza estados PT/EN | `normalize` | controllers e filtros |
-| `AuthService.php` | vazio actualmente | sem metodos | reservado |
-| `CredentialService.php` | vazio actualmente | sem metodos | reservado |
-| `ElectionService.php` | vazio actualmente | sem metodos | reservado |
-| `ResultService.php` | vazio actualmente | sem metodos | reservado |
-| `VotingService.php` | vazio actualmente | sem metodos | reservado |
+| `VotingService.php` | regista o voto atomicamente e impede duplicidade concorrente | `cast` | `VotingController` |
 
 ### 2.5 Requests de validacao
 
@@ -511,12 +503,10 @@ Services sao a camada que chama a API. Quase todos usam `unwrap(response) => res
 | `BallotPage.jsx` | boletim de voto | `voteService.ballot/confirm` | voto confirmado e recibo |
 | `CandidateProfilePage.jsx` | perfil do candidato | `candidateService.show` | foto, documento, biografia |
 | `VoteSuccessPage.jsx` | sucesso do voto | dados de navegacao/session | mensagem de sucesso |
-| `VoteConfirmPage.jsx` | confirmacao alternativa | componente de confirmacao | confirma escolha |
 | `ResultsPage.jsx` | lista resultados | `resultService.list` | eleicoes/resultados |
 | `ResultDetailsPage.jsx` | detalhes do resultado | `resultService.show/publish` | grafico/tabela de apuramento |
 | `ElectionSelectionPage.jsx` | seleccionar eleicao para resultado/auditoria | `electionService.list`, filtros | navega para destino correcto |
 | `AuditPage.jsx` | auditoria | `auditService.list` | historico de accoes |
-| `NotificationsPage.jsx` | notificacoes | `notificationService.list/read/remove` | notificacoes do eleitor |
 | `SettingsPage.jsx` | configuracoes | `settingService.updatePassword`, localStorage | altera senha/preferencias |
 | `UnauthorizedPage.jsx` | acesso negado | sem API | aviso de permissao |
 
@@ -526,32 +516,15 @@ Services sao a camada que chama a API. Quase todos usam `unwrap(response) => res
 |---|---|
 | `components/layout/AuthLayout.jsx` | layout das telas publicas de login/recuperacao |
 | `AppLayout.jsx` | layout autenticado com header/sidebar/conteudo |
-| `AppHeader.jsx`, `Header.jsx` | cabecalhos |
+| `Header.jsx` | cabecalho da area autenticada |
 | `Sidebar.jsx` | menu lateral, filtra itens por role e faz logout |
-| `PageHeader.jsx` | titulo/descricao/accoes de pagina |
-| `ThemeSelector.jsx` | alterna tema claro/escuro |
-| `components/common/Button.jsx` | botao reutilizavel |
-| `Card.jsx` | card visual |
-| `Badge.jsx` | etiqueta de estado |
-| `Input.jsx`, `Textarea.jsx`, `Select.jsx`, `RequiredLabel.jsx`, `FormError.jsx` | campos de formulario |
-| `Table.jsx`, `SimpleTable.jsx` | tabelas |
-| `Pagination.jsx`, `PaginationLayout.jsx`, `ManagementPagination.jsx` | paginacao |
-| `Modal.jsx` | janela modal |
+| `RequiredLabel.jsx`, `FormError.jsx` | rotulos obrigatorios e erros de formulario |
+| `DatePicker.jsx`, `DateTimePicker.jsx` | seleccao moderna de data e hora |
+| `PaginationLayout.jsx`, `ManagementPagination.jsx` | paginacao |
 | `Loading.jsx` | indicador de carregamento |
-| `EmptyState.jsx` | estado vazio |
 | `FeedbackCard.jsx` | feedback/alerta |
-| `SearchInput.jsx` | pesquisa |
-| `RowActions.jsx`, `ActionButtons.jsx` | botoes de editar, activar, suspender, remover |
-| `components/forms/CandidateForm.jsx` | formulario reutilizavel de candidato |
-| `DelegationForm.jsx` | formulario de delegacao |
-| `ElectionForm.jsx` | formulario de eleicao |
-| `MemberForm.jsx` | formulario de membro |
-| `UserForm.jsx` | formulario de utilizador |
-| `components/election/AuditTimeline.jsx` | linha temporal de auditoria |
-| `CandidateCard.jsx` | cartao de candidato |
-| `ElectionStatusBadge.jsx` | estado da eleicao |
-| `ResultChart.jsx` | grafico de resultados |
-| `VotingCard.jsx` | cartao de eleicao/votacao |
+| `ClearFiltersButton.jsx` | limpa filtros activos |
+| `RowActions.jsx` | menu de accoes por registo |
 | `components/voting/VoteConfirmModal.jsx` | modal final antes de confirmar voto |
 
 ### 3.7 Utils, constants e config
@@ -661,8 +634,7 @@ Services sao a camada que chama a API. Quase todos usam `unwrap(response) => res
 ## 5. Observacoes importantes
 
 - O backend contem alguns textos com caracteres codificados de forma incorrecta, por exemplo `EleiÃ§Ã£o`. Existe um comando `RepairMojibakeCommand.php` que parece destinado a corrigir este problema.
-- Alguns services backend estao vazios (`AuthService`, `ElectionService`, `ResultService`, `VotingService`, `CredentialService`). Actualmente a regra de negocio esta maioritariamente dentro dos controllers.
+- Os services vazios e os prototipos sem referencias foram removidos; `VotingService` concentra a transaccao critica do voto.
 - O frontend usa tanto roles em portugues como ingles: `COMISSAO/COMMISSION` e `ELEITOR/VOTER`. A normalizacao esta em `constants/roles.js` e utilitarios de permissao.
 - A resposta paginada do Laravel normalmente vem em `data.data`; por isso os services usam `payload?.data ?? payload ?? []`.
 - A seguranca principal depende de Sanctum, middleware `active` e middleware `role`.
-

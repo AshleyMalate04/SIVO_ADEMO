@@ -124,7 +124,7 @@ export default function ElectionCandidateFormPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão do Candidato</h1>
+        <h1>Gestão do candidato</h1>
         <p>Registe e altere candidatos com dados completos antes do início da eleição.</p>
       </header>
 
@@ -150,7 +150,7 @@ export default function ElectionCandidateFormPage() {
               {members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
             </select>
           </label>
-          <label className="form-field"><span>Delegação de Origem</span><input readOnly value={selectedMember?.delegation?.name ?? ''} /></label>
+          <label className="form-field"><span>Delegação de origem</span><input readOnly value={selectedMember?.delegation?.name ?? ''} /></label>
           <label className="form-field"><span>Órgão</span><input readOnly value={selectedElection?.organ?.name ?? ''} /></label>
           <label className="form-field"><span>Cargo</span><input readOnly value={selectedElection?.position?.name ?? ''} /></label>
         </div>

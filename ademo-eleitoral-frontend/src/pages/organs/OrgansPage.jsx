@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import PaginationLayout from '../../components/common/PaginationLayout'
 import RowActions from '../../components/common/RowActions'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import { useAuth } from '../../hooks/useAuth'
 import { notify } from '../../utils/notify'
 import { canCreateResource, canManageResource, canMutateStatus } from '../../utils/rolePermissions'
 import { organService } from '../../services/organService'
-import { normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { commonStatusClass, normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
 
 const normalizeOrgan = (organ) => ({
   id: organ.id,
@@ -57,7 +58,7 @@ export default function OrgansPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão de Órgãos e Cargos</h1>
+        <h1>Gestão de órgãos e cargos</h1>
         <p>Estrutura eleitoral dinâmica e configurável.</p>
       </header>
 
@@ -69,7 +70,7 @@ export default function OrgansPage() {
       <section className="filters-panel organs-filters" aria-label="Filtros de órgãos">
         <label className="filter-field filter-search">
           <Search size={22} />
-          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar órgão, cargo" />
+          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar órgãos ou cargos..." />
         </label>
         <label className="filter-field">
           <select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
@@ -78,6 +79,7 @@ export default function OrgansPage() {
             <option value="SUSPENDED">Suspendido</option>
           </select>
         </label>
+        <ClearFiltersButton active={Object.values(filters).some(Boolean)} onClick={() => setFilters({ q: '', status: '' })} />
       </section>
 
       <section className="table-card management-table-card">
@@ -89,7 +91,7 @@ export default function OrgansPage() {
                 <tr>
                   <th>Órgão</th>
                   <th>Cargos</th>
-                  <th><span className="state-heading">Estado <ArrowDown size={18} /></span></th>
+                  <th>Estado</th>
                   <th>Acções</th>
                 </tr>
               </thead>
@@ -102,7 +104,7 @@ export default function OrgansPage() {
                   <tr key={organ.id}>
                     <td className="title-cell">{organ.organ}</td>
                     <td>{organ.roles}</td>
-                    <td><span className="status-pill"><span></span>{organ.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(organ.rawStatus)}`}>{organ.status}</span></td>
                     <td>
                       <RowActions
                         canManage={canManage}

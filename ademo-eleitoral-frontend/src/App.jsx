@@ -2,6 +2,7 @@ import AppRoutes from './routes/AppRoutes'
 import { Toaster } from 'sonner'
 import './App.css'
 import './styles/accessibility-tailwind.css'
+import './styles/redesign.css'
 
 function App() {
   return (
@@ -10,7 +11,6 @@ function App() {
       <Toaster
         closeButton
         position="top-right"
-        richColors
         toastOptions={{
           className: 'app-toast',
         }}

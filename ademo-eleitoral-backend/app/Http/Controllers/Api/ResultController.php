@@ -6,8 +6,8 @@ use App\Events\EleicaoEstadoActualizado;
 use App\Events\ResultadoPublicado;
 use App\Http\Controllers\Controller;
 use App\Models\Election;
-use App\Models\ElectionVoter;
 use App\Models\ElectionTeam;
+use App\Models\ElectionVoter;
 use App\Models\Member;
 use App\Models\PhysicalVoteTotal;
 use App\Models\Vote;
@@ -17,13 +17,12 @@ use App\Support\ApiResponse;
 use App\Support\StatusNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ResultController extends Controller
 {
-    public function __construct(private readonly NotificationService $notificationService)
-    {
-    }
+    public function __construct(private readonly NotificationService $notificationService) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -96,10 +95,10 @@ class ResultController extends Controller
         //     $query->whereIn('id', $teamElectionIds);
         // }
         if ($user && ! $user->isAdmin() && ($user->isCommission() || $user->isFiscal())) {
-    if (! $this->userCanManageElection($user->id, $electionId)) {
-        abort(403, 'Você não foi seleccionado para gerir esta eleição.');
-    }
-}
+            if (! $this->userCanManageElection($user->id, $electionId)) {
+                abort(403, 'Você não foi seleccionado para gerir esta eleição.');
+            }
+        }
 
         if ($user?->isVoter()) {
             $member = $this->memberForUser($request);
@@ -119,22 +118,31 @@ class ResultController extends Controller
             }
         }
 
+        $onlineVotesByCandidate = Vote::query()
+            ->where('election_id', $electionId)
+            ->where('is_blank', false)
+            ->groupBy('candidate_id')
+            ->selectRaw('candidate_id, COUNT(*) AS aggregate')
+            ->pluck('aggregate', 'candidate_id');
         $onlineBlankVotes = Vote::where('election_id', $electionId)->where('is_blank', true)->count();
-        $onlineValidVotes = Vote::where('election_id', $electionId)->where('is_blank', false)->count();
+        $onlineValidVotes = (int) $onlineVotesByCandidate->sum();
+
+        $physicalVotesByCandidate = PhysicalVoteTotal::query()
+            ->where('election_id', $electionId)
+            ->whereNotNull('candidate_id')
+            ->where('status', 'APPROVED')
+            ->groupBy('candidate_id')
+            ->selectRaw('candidate_id, SUM(votes) AS aggregate')
+            ->pluck('aggregate', 'candidate_id');
         $physicalBlankVotes = PhysicalVoteTotal::where('election_id', $electionId)
             ->whereNull('candidate_id')
             ->where('status', 'APPROVED')
             ->sum('votes');
-        $physicalValidVotes = PhysicalVoteTotal::where('election_id', $electionId)
-            ->whereNotNull('candidate_id')
-            ->where('status', 'APPROVED')
-            ->sum('votes');
+        $physicalValidVotes = (int) $physicalVotesByCandidate->sum();
 
-        $candidateResults = $election->candidates->map(function ($candidate) {
-            $onlineVotes = Vote::where('candidate_id', $candidate->id)->where('is_blank', false)->count();
-            $physicalVotes = PhysicalVoteTotal::where('candidate_id', $candidate->id)
-                ->where('status', 'APPROVED')
-                ->sum('votes');
+        $candidateResults = $election->candidates->map(function ($candidate) use ($onlineVotesByCandidate, $physicalVotesByCandidate) {
+            $onlineVotes = (int) ($onlineVotesByCandidate[$candidate->id] ?? 0);
+            $physicalVotes = (int) ($physicalVotesByCandidate[$candidate->id] ?? 0);
 
             return [
                 'candidate' => $candidate,
@@ -156,37 +164,46 @@ class ResultController extends Controller
 
     public function publish(Request $request, int|string $electionId): JsonResponse
     {
-        $election = Election::findOrFail($electionId);
+        DB::beginTransaction();
 
-        $user = $request->user();
-        if ($user && ! $user->isAdmin() && ($user->isCommission() || $user->isFiscal()) && ! $this->userCanManageElection($user->id, $electionId)) {
-            abort(403, 'Você não foi seleccionado para gerir esta eleição.');
-        }
+        try {
+            // Evita publicar enquanto o estado ou os totais presenciais mudam.
+            $election = Election::query()->lockForUpdate()->findOrFail($electionId);
 
-        if ($election->status !== 'CONCLUIDA') {
-            throw ValidationException::withMessages([
-                'status' => 'Só é possível publicar resultados depois da eleição estar concluída.',
+            $user = $request->user();
+            if ($user && ! $user->isAdmin() && ($user->isCommission() || $user->isFiscal()) && ! $this->userCanManageElection($user->id, $electionId)) {
+                abort(403, 'Você não foi seleccionado para gerir esta eleição.');
+            }
+
+            if ($election->status !== 'CONCLUIDA') {
+                throw ValidationException::withMessages([
+                    'status' => 'Só é possível publicar resultados depois da eleição estar concluída.',
+                ]);
+            }
+
+            $hasPendingPhysicalResults = PhysicalVoteTotal::where('election_id', $electionId)
+                ->where('status', 'PENDING')
+                ->exists();
+
+            if ($hasPendingPhysicalResults) {
+                throw ValidationException::withMessages([
+                    'physical_results' => 'Existem resultados presenciais por aprovar antes da publicação.',
+                ]);
+            }
+
+            $previousStatus = $election->status;
+
+            $election->update([
+                'status' => 'RESULTADOS_PUBLICADOS',
+                'results_status' => 'PUBLISHED',
+                'results_published_at' => now(),
+                'results_published_by' => $request->user()?->id,
             ]);
+            DB::commit();
+        } catch (\Throwable $exception) {
+            DB::rollBack();
+            throw $exception;
         }
-
-        $hasPendingPhysicalResults = PhysicalVoteTotal::where('election_id', $electionId)
-            ->where('status', 'PENDING')
-            ->exists();
-
-        if ($hasPendingPhysicalResults) {
-            throw ValidationException::withMessages([
-                'physical_results' => 'Existem resultados presenciais por aprovar antes da publicação.',
-            ]);
-        }
-
-        $previousStatus = $election->status;
-
-        $election->update([
-            'status' => 'RESULTADOS_PUBLICADOS',
-            'results_status' => 'PUBLISHED',
-            'results_published_at' => now(),
-            'results_published_by' => $request->user()?->id,
-        ]);
         AuditService::record($request, 'RESULTADOS_PUBLICADOS', 'Election', $election->id, [
             'election_id' => $election->id,
         ]);

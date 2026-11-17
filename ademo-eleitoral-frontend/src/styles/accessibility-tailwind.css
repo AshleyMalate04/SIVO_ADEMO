@@ -13,7 +13,6 @@ button:disabled,
 select:disabled,
 input:disabled,
 textarea:disabled,
-.disabled-button,
 .disabled-link {
   @apply cursor-not-allowed !bg-slate-200 !text-ademo-text-soft opacity-100;
 }
@@ -28,29 +27,19 @@ textarea:disabled,
 }
 
 .app-header-scrolled {
-  @apply !border-ademo-border/70 !bg-ademo-surface/90 shadow-lg backdrop-blur;
+  @apply !border-ademo-border/70 !bg-ademo-surface;
 }
 
-.header-link,
-.brand,
-.user-meta strong,
 .management-header h1,
-.content-page-header h1,
-.form-page h1,
-.success-page h1,
 .page-intro h1 {
   @apply !text-ademo-text;
 }
 
-.header-link:hover,
-.logout-link:hover,
 .table-action:hover,
 .section-heading a,
 .auth-row a,
 .auth-link-row a,
 .cancel-link,
-.link-actions a,
-.modal-kicker,
 .code-meta strong,
 .code-meta button,
 .required-mark,
@@ -64,7 +53,6 @@ textarea:disabled,
 }
 
 .sidebar-link.active,
-.mobile-sidebar-profile span,
 .mode-tab.active {
   @apply !bg-ademo-primary !text-white;
 }
@@ -79,8 +67,7 @@ textarea:disabled,
   @apply !inline-flex !min-h-11 items-center justify-center gap-2 !rounded-lg !border !border-ademo-border !bg-ademo-surface px-6 py-3 font-bold !text-ademo-text no-underline transition-colors hover:!border-ademo-border-strong hover:!bg-ademo-surface-soft;
 }
 
-.danger-action-button,
-.delete-button {
+.danger-action-button {
   @apply !inline-flex !min-h-11 items-center justify-center gap-2 !rounded-lg !border !border-ademo-danger !bg-ademo-danger px-6 py-3 font-bold !text-white no-underline transition-colors hover:!border-ademo-danger-hover hover:!bg-ademo-danger-hover;
 }
 
@@ -88,8 +75,7 @@ textarea:disabled,
 .primary-button:disabled,
 .top-create-button:disabled,
 .secondary-button:disabled,
-.danger-action-button:disabled,
-.delete-button:disabled {
+.danger-action-button:disabled {
   @apply !border-slate-200 !bg-slate-200 !text-ademo-text-soft opacity-100;
 }
 
@@ -97,7 +83,6 @@ textarea:disabled,
 .form-field select,
 .form-field textarea,
 .filter-field,
-.toolbar-search,
 .searchable-select-trigger,
 .code-grid input {
   @apply !border-ademo-border !bg-ademo-surface !text-ademo-text;
@@ -107,7 +92,6 @@ textarea:disabled,
 .form-field select:focus,
 .form-field textarea:focus,
 .filter-field:focus-within,
-.toolbar-search:focus-within,
 .searchable-select-trigger:focus-visible,
 .code-grid input:focus {
   @apply !border-ademo-primary !shadow-[0_0_0_3px_rgb(245_158_11_/_0.35)];
@@ -121,32 +105,21 @@ textarea:disabled,
 }
 
 .management-header p,
-.content-page-header p,
-.success-page p,
 .page-intro p,
-.user-meta span,
-.settings-state-text,
 .empty-table-message,
 .loading-state,
-.filter-field,
-.toolbar-search {
+.filter-field {
   @apply !text-ademo-text-muted;
 }
 
 .page-intro,
-.simple-panel,
-.form-page,
-.detail-card,
-.vote-card,
 .selection-panel,
 .table-card,
 .management-form-card,
-.settings-card,
 .election-detail-card,
 .election-side-card,
-.notification-card,
 .roles-panel {
-  @apply !border !border-ademo-border !bg-ademo-surface shadow-sm;
+  @apply !border !border-ademo-border !bg-ademo-surface;
 }
 
 .filters-panel,
@@ -166,11 +139,10 @@ textarea:disabled,
 }
 
 .stat-card {
-  @apply !border-ademo-border !border-l-ademo-primary !bg-ademo-surface;
+  @apply !border-ademo-border !bg-ademo-surface;
 }
 
 .stat-card strong,
-.stat-icon,
 .loading-state span {
   @apply !text-ademo-primary;
 }
@@ -183,87 +155,43 @@ textarea:disabled,
   @apply !bg-slate-200 !text-ademo-text-muted;
 }
 
-.vote-card input,
 .check-field input {
   @apply accent-ademo-primary;
 }
 
-.vote-card.selected,
 .wizard-step.active,
 .election-option.selected {
-  @apply !border-ademo-primary !bg-ademo-primary-soft !shadow-[0_0_0_3px_rgb(159_18_57_/_0.14)];
+  @apply !border-ademo-primary !bg-ademo-primary-soft;
 }
 
 .publish-results-panel {
-  @apply !border-ademo-warning-soft !bg-ademo-warning-soft/45 !shadow-sm;
+  @apply !border-ademo-warning-soft !bg-ademo-warning-soft/45;
 }
 
-.status-pill,
-.status-active,
-.status-approved,
-.status-resultados-publicados,
-.status-published {
-  @apply inline-flex items-center gap-2 rounded-full !bg-ademo-success-soft px-3 py-1 text-sm font-bold !text-ademo-success;
-}
-
-.status-pill.scheduled,
-.status-programada,
-.status-warning,
-.status-pending {
-  @apply !bg-ademo-warning-soft !text-ademo-warning;
-}
-
-.status-pill.voting,
-.status-em-votacao,
-.status-info {
-  @apply !bg-ademo-info-soft !text-ademo-info;
-}
-
-.status-pill.completed,
-.status-concluida {
-  @apply !bg-ademo-indigo-soft !text-ademo-indigo;
-}
-
-.status-cancelada,
-.status-suspensa,
-.status-suspended,
-.status-rejected,
-.danger-pill {
-  @apply !bg-ademo-danger-soft !text-ademo-danger;
-}
-
-.status-inactive {
-  @apply !bg-slate-200 !text-ademo-text-muted;
-}
-
-.toast-success,
 [data-sonner-toast][data-type='success'].app-toast {
-  @apply !border-l-4 !border-l-ademo-success !bg-ademo-success-soft !text-ademo-success;
+  @apply !border !border-ademo-border !bg-ademo-surface !text-ademo-text;
 }
 
-.toast-error,
 [data-sonner-toast][data-type='error'].app-toast {
-  @apply !border-l-4 !border-l-ademo-danger !bg-ademo-danger-soft !text-ademo-danger;
+  @apply !border !border-ademo-border !bg-ademo-surface !text-ademo-text;
 }
 
-.toast-warning,
 [data-sonner-toast][data-type='warning'].app-toast {
-  @apply !border-l-4 !border-l-ademo-warning !bg-ademo-warning-soft !text-ademo-warning;
+  @apply !border !border-ademo-border !bg-ademo-surface !text-ademo-text;
 }
 
-.toast-info,
 [data-sonner-toast][data-type='info'].app-toast {
-  @apply !border-l-4 !border-l-ademo-info !bg-ademo-info-soft !text-ademo-info;
+  @apply !border !border-ademo-border !bg-ademo-surface !text-ademo-text;
 }
 
 .modal-overlay,
 .audit-details-overlay {
-  @apply !fixed !inset-0 !z-[9999] !flex !h-dvh !w-screen !items-center !justify-center !overflow-y-auto !bg-slate-900/70 !p-6 !backdrop-blur-md;
+  @apply !fixed !inset-0 !z-[9999] !flex !h-dvh !w-screen !items-center !justify-center !overflow-y-auto !bg-slate-900/50 !p-6;
 }
 
 .action-dialog,
 .professional-modal-card {
-  @apply !max-h-[calc(100dvh-48px)] !w-[min(760px,100%)] !overflow-y-auto !rounded-2xl !bg-ademo-surface !shadow-2xl;
+  @apply !max-h-[calc(100dvh-48px)] !w-[min(760px,100%)] !overflow-y-auto !rounded-lg !bg-ademo-surface !shadow-lg;
 }
 
 .baixo {

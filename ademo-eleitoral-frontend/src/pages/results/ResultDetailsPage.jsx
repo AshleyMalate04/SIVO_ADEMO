@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, BarChart3, Trophy } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import { resultService } from '../../services/resultService'
 import { notify } from '../../utils/notify'
@@ -56,7 +56,7 @@ export default function ResultDetailsPage() {
       <section className="election-detail-card">
         <div className="detail-title-row">
           <h2>Dados da eleição</h2>
-          {winner ? <span className="winner-mini"><Trophy size={16} /> Vencedor: {winner.name}</span> : null}
+          {winner ? <span className="winner-mini">Vencedor: <strong>{winner.name}</strong></span> : null}
         </div>
         <div className="detail-info-grid">
           <p><span>Órgão</span>{election?.organ?.name ?? 'Sem órgão'}</p>
@@ -95,7 +95,7 @@ export default function ResultDetailsPage() {
       </section>
 
       <section className="partial-results-card professional-results-card">
-        <header><h2><BarChart3 size={22} /> Apuramento visual</h2></header>
+        <header><h2>Apuramento</h2></header>
         <div className="results-bars">
           {visualRows.map((row) => {
             const percent = Number(result.total_votes) > 0 ? Math.round((row.total / Number(result.total_votes)) * 100) : 0

@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\FrontendUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -72,6 +73,6 @@ class AdemoEmailNotification extends Notification implements ShouldQueue
 
     private function defaultActionUrl(): string
     {
-        return rtrim((string) env('FRONTEND_URL', config('app.url')), '/').'/dashboard';
+        return FrontendUrl::to('/dashboard');
     }
 }

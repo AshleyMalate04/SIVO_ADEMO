@@ -77,7 +77,7 @@ export default function DelegationFormPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão de Delegações</h1>
+        <h1>Gestão de delegações</h1>
         <p>{isEditing ? 'Altere os dados da delegação seleccionada.' : 'Registe a delegação e associe-a à província e distrito carregados da base de dados.'}</p>
       </header>
 

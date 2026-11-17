@@ -21,7 +21,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class ElectionController extends CrudController
 {
@@ -234,29 +236,50 @@ class ElectionController extends CrudController
 
     public function updateStatus(ElectionStatusRequest $request, int|string $id): JsonResponse
     {
-        $election = Election::findOrFail($id);
-        $user = $request->user();
+        DB::beginTransaction();
 
-        if ($user && ! $user->isAdmin() && $user->isCommission()) {
-            $isTeamMember = ElectionTeam::query()
-                ->where('election_id', $election->id)
-                ->where('user_id', $user->id)
-                ->where('status', 'AUTHORIZED')
-                ->exists();
+        try {
+            // O bloqueio exclusivo serializa esta transicao com votos e publicacao.
+            $election = Election::query()->lockForUpdate()->findOrFail($id);
+            $user = $request->user();
 
-            if (! $isTeamMember) {
-                abort(403, 'Você não foi seleccionado para gerir esta eleição.');
+            if ($user && ! $user->isAdmin() && $user->isCommission()) {
+                $isTeamMember = ElectionTeam::query()
+                    ->where('election_id', $election->id)
+                    ->where('user_id', $user->id)
+                    ->where('status', 'AUTHORIZED')
+                    ->exists();
+
+                if (! $isTeamMember) {
+                    abort(403, 'Você não foi seleccionado para gerir esta eleição.');
+                }
             }
-        }
 
-        $previousStatus = $election->status;
-        $payload = $request->validated();
-        if (isset($payload['status'])) {
-            $payload['status'] = StatusNormalizer::normalize($payload['status']);
-        }
+            $previousStatus = $election->status;
+            $payload = $request->validated();
+            if (isset($payload['status'])) {
+                $payload['status'] = StatusNormalizer::normalize($payload['status']);
+            }
 
-        $election->update($payload);
-        $fresh = $election->fresh($this->with);
+            $allowedTransition = match ($election->status) {
+                'PROGRAMADA' => $payload['status'] === 'EM_VOTACAO',
+                'EM_VOTACAO' => $payload['status'] === 'CONCLUIDA',
+                default => false,
+            };
+
+            if (! $allowedTransition) {
+                throw ValidationException::withMessages([
+                    'status' => 'A transicao de estado solicitada nao e permitida.',
+                ]);
+            }
+
+            $election->update($payload);
+            $fresh = $election->fresh($this->with);
+            DB::commit();
+        } catch (\Throwable $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
 
         AuditService::record($request, $fresh->status === 'CONCLUIDA' ? 'CONCLUIDA' : 'ALTERACAO_DE_ESTADO_DE_ELEICAO', 'Election', $fresh->id, [
             'election_id' => $fresh->id,

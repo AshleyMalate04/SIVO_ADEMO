@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use App\Models\User;
-use App\Services\AccessNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -23,24 +22,26 @@ class InitialAccessMail extends Mailable implements ShouldQueue
      */
     public array $backoff = [60, 300, 900];
 
-    public function __construct(public User $user)
-    {
+    public function __construct(
+        public User $user,
+        public string $initialPassword,
+        public string $loginUrl,
+    ) {
         $this->onQueue('mail');
     }
 
     public function build(): static
     {
-        $loginUrl = rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/').'/login';
-
         return $this
+            ->from((string) config('mail.from.address'), (string) config('mail.from.name'))
             ->subject('Dados de acesso à plataforma ADEMO Eleitoral')
             ->view('emails.initial-access')
             ->text('emails.initial-access-text')
             ->with([
                 'name' => $this->user->name,
                 'accessCode' => $this->user->access_code,
-                'initialPassword' => AccessNotificationService::DEFAULT_PASSWORD,
-                'loginUrl' => $loginUrl,
+                'initialPassword' => $this->initialPassword,
+                'loginUrl' => $this->loginUrl,
             ]);
     }
 }

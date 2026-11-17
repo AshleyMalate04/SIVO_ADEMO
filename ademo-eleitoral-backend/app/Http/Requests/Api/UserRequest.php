@@ -2,24 +2,31 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Models\User;
 use Illuminate\Validation\Rule;
 
 class UserRequest extends ApiFormRequest
 {
     protected function prepareForValidation(): void
     {
+        $data = [];
+
         if ($this->has('name')) {
-            $this->merge([
-                'name' => $this->uppercaseName($this->input('name')),
-            ]);
+            $data['name'] = $this->uppercaseName($this->input('name'));
         }
+
+        if ($this->has('email')) {
+            $data['email'] = mb_strtolower(trim((string) $this->input('email')), 'UTF-8');
+        }
+
+        $this->merge($data);
     }
 
     public function rules(): array
     {
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
-        $currentUser = $this->routeId() ? \App\Models\User::find($this->routeId()) : null;
-        $emailRules = ['nullable', 'email', 'max:200', Rule::unique('users', 'email')->ignore($this->routeId())];
+        $currentUser = $this->routeId() ? User::find($this->routeId()) : null;
+        $emailRules = [$required, 'email', 'max:200', Rule::unique('users', 'email')->ignore($this->routeId())];
         $phoneRules = [$required, 'string', 'regex:/^(82|83|84|85|86|87)[0-9]{7}$/', Rule::unique('users', 'phone')->ignore($this->routeId())];
 
         if (! $currentUser || $this->input('email') !== $currentUser->email) {
@@ -46,6 +53,7 @@ class UserRequest extends ApiFormRequest
     public function messages(): array
     {
         return [
+            'email.required' => 'Informe o email do utilizador.',
             'access_code.unique' => 'Este código de acesso já foi registado.',
             'email.email' => 'Informe um email válido.',
             'email.unique' => 'Este email já foi registado no sistema.',

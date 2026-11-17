@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ademo-bg: #f8fafc;
+  --color-ademo-bg: #f5f6f7;
   --color-ademo-surface: #ffffff;
-  --color-ademo-surface-soft: #f1f5f9;
-  --color-ademo-text: #0f172a;
-  --color-ademo-text-muted: #475569;
-  --color-ademo-text-soft: #64748b;
-  --color-ademo-primary: #9f1239;
-  --color-ademo-primary-hover: #881337;
-  --color-ademo-primary-soft: #ffe4e6;
+  --color-ademo-surface-soft: #f5f6f7;
+  --color-ademo-text: #1c2022;
+  --color-ademo-text-muted: #525b5f;
+  --color-ademo-text-soft: #6a7478;
+  --color-ademo-primary: #b4232a;
+  --color-ademo-primary-hover: #8f1720;
+  --color-ademo-primary-soft: #fdf3f3;
   --color-ademo-success: #166534;
   --color-ademo-success-soft: #dcfce7;
   --color-ademo-warning: #92400e;
   --color-ademo-warning-soft: #fef3c7;
-  --color-ademo-danger: #991b1b;
-  --color-ademo-danger-hover: #7f1d1d;
-  --color-ademo-danger-soft: #fee2e2;
+  --color-ademo-danger: #b4232a;
+  --color-ademo-danger-hover: #8f1720;
+  --color-ademo-danger-soft: #fdf3f3;
   --color-ademo-info: #1d4ed8;
   --color-ademo-info-soft: #dbeafe;
-  --color-ademo-border: #cbd5e1;
-  --color-ademo-border-strong: #94a3b8;
+  --color-ademo-border: #d5dadc;
+  --color-ademo-border-strong: #b9c0c3;
   --color-ademo-focus: #f59e0b;
   --color-ademo-indigo: #3730a3;
   --color-ademo-indigo-soft: #e0e7ff;
@@ -30,8 +30,8 @@
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  color: #0f172a;
-  background: #f8fafc;
+  color: #1c2022;
+  background: #f5f6f7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -44,14 +44,14 @@
 
 html {
   min-width: 320px;
-  background: #f8fafc;
+  background: #f5f6f7;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f8fafc;
+  background: #f5f6f7;
 }
 
 button,

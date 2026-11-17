@@ -33,6 +33,7 @@ class PasswordResetCodeMail extends Mailable implements ShouldQueue
     public function build(): static
     {
         return $this
+            ->from((string) config('mail.from.address'), (string) config('mail.from.name'))
             ->subject('Código de verificação para redefinir palavra-passe - ADEMO')
             ->view('emails.password-reset-code')
             ->text('emails.password-reset-code-text')

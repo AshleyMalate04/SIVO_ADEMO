@@ -32,25 +32,35 @@ export default function CandidateProfilePage() {
   const backTo = useMemo(() => (eleicaoId ? `/portal-eleitor/votacoes/${eleicaoId}` : '/candidatos'), [eleicaoId])
   const photoUrl = resolveAssetUrl(candidate?.photo_url || candidate?.photo_path)
   const visiblePhotoUrl = photoFailed ? '' : photoUrl
-  const documentUrl = resolveAssetUrl(candidate?.document_url || candidate?.document_path)
+  const documentUrl = resolveAssetUrl(candidate?.document_url)
   const hasDocument = Boolean(documentUrl)
 
   useEffect(() => {
     setPhotoFailed(false)
   }, [photoUrl])
 
-  const openDocument = () => {
+  const openDocument = async () => {
     if (!hasDocument) {
       notify.success('Documento indisponível.', 'Este candidato não tem documento associado.')
       return
     }
 
-    if (String(documentUrl).startsWith('http')) {
-      window.open(documentUrl, '_blank', 'noopener,noreferrer')
+    const tab = window.open('', '_blank')
+    if (!tab) {
+      notify.error('Não foi possível abrir o documento.', 'Permita novas janelas e tente novamente.')
       return
     }
+    tab.opener = null
 
-    notify.success('Documento registado.', documentUrl)
+    try {
+      const freshCandidate = await candidateService.show(candidateId)
+      const freshUrl = resolveAssetUrl(freshCandidate?.document_url)
+      if (!freshUrl) throw new Error('Documento indisponível')
+      tab.location.replace(freshUrl)
+    } catch {
+      tab.close()
+      notify.error('Documento indisponível.', 'Actualize a página ou tente novamente mais tarde.')
+    }
   }
 
   if (loading) return <Loading label="A carregar dados do candidato..." />
@@ -89,7 +99,7 @@ export default function CandidateProfilePage() {
           </button>
           <h2>{candidate.member?.name ?? 'Sem nome'}</h2>
           <p>{candidate.member?.delegation?.name ?? 'Sem delegação'}</p>
-          <span className={`status-pill ${commonStatusClass(candidate.status)}`}><span></span>{statusLabel(candidate.status)}</span>
+          <span className={`status-pill ${commonStatusClass(candidate.status)}`}>{statusLabel(candidate.status)}</span>
         </aside>
 
         <article className="candidate-data-card">

@@ -63,27 +63,16 @@ class User extends Authenticatable
         return in_array($this->role, ['VOTER', 'ELEITOR'], true);
     }
 
-
     public function linkedMember(): ?Member
     {
         if (! $this->isVoter()) {
             return null;
         }
 
+        // A conta do eleitor e criada com o codigo do membro como access_code.
+        // Email e telefone nao sao identificadores seguros nem necessariamente unicos.
         return Member::query()
-            ->where(function ($query): void {
-                if ($this->email) {
-                    $query->orWhere('email', $this->email);
-                }
-
-                if ($this->phone) {
-                    $query->orWhere('phone', $this->phone);
-                }
-
-                if ($this->access_code) {
-                    $query->orWhere('member_code', $this->access_code);
-                }
-            })
+            ->where('member_code', $this->access_code)
             ->first();
     }
 

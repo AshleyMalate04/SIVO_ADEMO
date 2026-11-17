@@ -53,19 +53,22 @@ export default function BallotPage() {
         setFailedPhotoIds(new Set());
         setRemainingSeconds(secondsUntil(data.election?.ends_at));
         if (data.has_voted) {
-          notify.success("Voto já registado.", "Você já votou nesta eleição. O boletim fica apenas para consulta.");
+          // Never show a remembered choice once the vote is cast (shared computers).
+          sessionStorage.removeItem(storageKey);
+          setSelectedOption("");
+          notify.success("Voto já registado.", "Já votou nesta eleição. O boletim fica apenas para consulta.");
         }
-        if (!selectedOption && options[0]) setSelectedOption(String(options[0].id));
       })
       .catch((error) => notify.error("Não foi possível carregar o boletim.", error.response?.data?.message || "Verifique a API."))
       .finally(() => setLoading(false));
-  }, [eleicaoId, selectedOption]);
+  }, [eleicaoId, storageKey]);
 
   const selectedCandidate = payload?.options?.find((candidate) => String(candidate.id) === selectedOption);
   const hasPhoto = (candidate) => Boolean(candidate.photo) && !failedPhotoIds.has(String(candidate.id));
 
   useEffect(() => {
-    sessionStorage.setItem(storageKey, selectedOption);
+    // Keeps the choice while the voter opens a candidate profile and comes back.
+    if (selectedOption) sessionStorage.setItem(storageKey, selectedOption);
   }, [selectedOption, storageKey]);
 
   useEffect(() => {
@@ -80,12 +83,12 @@ export default function BallotPage() {
     event.preventDefault();
 
     if (!payload?.is_authorized_voter) {
-      notify.warning("Sem autorização.", "Você não foi seleccionado para votar nesta eleição.");
+      notify.warning("Sem autorização.", "Não foi seleccionado para votar nesta eleição.");
       return;
     }
 
     if (payload?.has_voted) {
-      notify.warning("Voto já registado.", "Você já votou nesta eleição e não pode votar novamente.");
+      notify.warning("Voto já registado.", "Já votou nesta eleição e não pode votar novamente.");
       return;
     }
 
@@ -100,20 +103,26 @@ export default function BallotPage() {
       return;
     }
 
-    notify.warning("Confirme a sua escolha.", "Revise o voto antes de submeter definitivamente.");
     setShowConfirmModal(true);
   }
 
   async function handleConfirmVote() {
     try {
       setIsSubmitting(true);
-      await voteService.confirm(eleicaoId, {
-        member_id: payload.member_id,
+      const confirmation = await voteService.confirm(eleicaoId, {
         candidate_id: selectedCandidate?.isBlank ? null : Number(selectedCandidate.id),
         is_blank: Boolean(selectedCandidate?.isBlank),
       });
-      notify.success("Voto registado com sucesso.", "O seu voto foi recebido pelo sistema.");
-      navigate(`/portal-eleitor/votacoes/sucesso`);
+      sessionStorage.removeItem(storageKey);
+      notify.success("Voto registado.", "O seu voto foi recebido pelo sistema.");
+      navigate(`/portal-eleitor/votacoes/sucesso`, {
+        replace: true,
+        state: {
+          receiptCode: confirmation?.receipt?.public_code ?? null,
+          electionId: eleicaoId,
+          electionTitle: payload?.election?.title ?? null,
+        },
+      });
     } catch (error) {
       notify.error("Voto não registado.", getApiErrorMessage(error));
     } finally {
@@ -127,7 +136,7 @@ export default function BallotPage() {
     <>
       <form className="voter-page ballot-page" onSubmit={handleContinue}>
         <header className="management-header">
-          <h1>Boletim de Voto</h1>
+          <h1>Boletim de voto</h1>
           <p>Seleccione o candidato pretendido. Pode consultar os detalhes antes de confirmar.</p>
         </header>
 

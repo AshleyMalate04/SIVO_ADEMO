@@ -28,10 +28,10 @@ export function resolveAssetUrl(path) {
     try {
       const url = new URL(value)
       const apiUrl = new URL(apiBaseUrl || window.location.origin, window.location.origin)
-      const pointsToLocalhostWithoutPort = ['localhost', '127.0.0.1'].includes(url.hostname) && !url.port
+      const pointsToLocalhost = ['localhost', '127.0.0.1'].includes(url.hostname)
 
-      if (pointsToLocalhostWithoutPort && publicAssetPrefixes.some((prefix) => url.pathname.startsWith(prefix))) {
-        return `${apiUrl.origin}${url.pathname}`
+      if (pointsToLocalhost && publicAssetPrefixes.some((prefix) => url.pathname.startsWith(prefix))) {
+        return `${apiUrl.origin}${url.pathname}${url.search}`
       }
 
       return value

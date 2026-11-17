@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
+import DateTimePicker from '../../components/common/DateTimePicker'
 import Loading from '../../components/common/Loading'
 import { delegationService } from '../../services/delegationService'
 import { electionService } from '../../services/electionService'
@@ -207,28 +208,26 @@ export default function ElectionCreatePage() {
               {positions.map((position) => <option key={position.id} value={position.id}>{position.name}</option>)}
             </select>
           </label>
-          <label className="form-field">
+          <div className="form-field">
             <span>Início da votação</span>
-            <input
-              required
-              name="starts_at"
-              type="datetime-local"
+            <DateTimePicker
               min={minDateTime}
               value={form.starts_at}
-              onChange={(event) => setField('starts_at', event.target.value)}
+              onChange={(nextValue) => setField('starts_at', nextValue)}
+              ariaLabel="Seleccionar início da votação"
+              placeholder="Seleccionar início..."
             />
-          </label>
-          <label className="form-field">
+          </div>
+          <div className="form-field">
             <span>Fim da votação</span>
-            <input
-              required
-              name="ends_at"
-              type="datetime-local"
+            <DateTimePicker
               min={form.starts_at || minDateTime}
               value={form.ends_at}
-              onChange={(event) => setField('ends_at', event.target.value)}
+              onChange={(nextValue) => setField('ends_at', nextValue)}
+              ariaLabel="Seleccionar fim da votação"
+              placeholder="Seleccionar fim..."
             />
-          </label>
+          </div>
         </div>
 
         <label className="form-field">

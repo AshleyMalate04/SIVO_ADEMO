@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BarChart3, CalendarClock, CheckCircle2, Pencil, ShieldCheck, Trophy, UserCog, Vote } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Pencil, ShieldCheck, UserCog } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import { electionService } from '../../services/electionService'
 import { resultService } from '../../services/resultService'
@@ -28,7 +28,7 @@ export default function ElectionDetailsPage() {
   const isVoterView = location.pathname.startsWith('/portal-eleitor')
   const backTo = isVoterView ? '/portal-eleitor/votacoes' : '/eleicoes'
 
-  const loadElection = async () => {
+  const loadElection = useCallback(async () => {
     try {
       setLoading(true)
       const record = await electionService.show(id)
@@ -39,13 +39,13 @@ export default function ElectionDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
-  useEffect(() => { loadElection() }, [id])
+  useEffect(() => { loadElection() }, [loadElection])
 
   useElectionRealtime(id, {
-    onResultUpdated: () => loadElection(),
-    onStatusUpdated: () => loadElection(),
+    onResultUpdated: loadElection,
+    onStatusUpdated: loadElection,
   })
 
   const updateStatus = async (status) => {
@@ -91,14 +91,10 @@ export default function ElectionDetailsPage() {
       <Link className="back-link" to={backTo}><ArrowLeft size={16} /> Voltar</Link>
       <div className="detail-layout">
         <div className="detail-main">
-          <header className="management-header election-detail-heading">
-            {/* <span>Detalhes da eleição #{id}</span>
-            <h1>{election.title}</h1> */}
-          </header>
           <section className="election-detail-card hero-detail-card">
             <div className="detail-title-row">
               <h2>{election.title}</h2>
-              <span className={`status-pill ${getElectionStatusClass(election.status)}`}><span></span>{getElectionStatusLabel(election.status)}</span>
+              <span className={`status-pill ${getElectionStatusClass(election.status)}`}>{getElectionStatusLabel(election.status)}</span>
             </div>
             <div className="detail-info-grid">
               <p><span>Órgão</span>{election.organ?.name ?? 'Sem órgão'}</p>
@@ -112,21 +108,21 @@ export default function ElectionDetailsPage() {
           <section className="election-detail-card">
             <h2>Informações da votação</h2>
             <div className="detail-info-grid voting-info-grid">
-              <p><CalendarClock size={17} /><span>Início da votação</span>{formatDateTime(election.starts_at)}</p>
-              <p><CalendarClock size={17} /><span>Fim da votação</span>{formatDateTime(election.ends_at)}</p>
-              <p><Vote size={17} /><span>Regra de votação</span>Maioria simples</p>
-              <p><ShieldCheck size={17} /><span>Voto em branco</span>{election.allow_blank_vote ? 'Permitido' : 'Não permitido'}</p>
+              <p><span>Início da votação</span>{formatDateTime(election.starts_at)}</p>
+              <p><span>Fim da votação</span>{formatDateTime(election.ends_at)}</p>
+              <p><span>Regra de votação</span>Maioria simples</p>
+              <p><span>Voto em branco</span>{election.allow_blank_vote ? 'Permitido' : 'Não permitido'}</p>
             </div>
           </section>
 
           {result ? (
             <section className="election-detail-card">
-              <div className="detail-title-row"><h2>Resumo dos resultados</h2>{winner ? <span className="winner-mini"><Trophy size={16} /> {winner.name}</span> : null}</div>
+              <div className="detail-title-row"><h2>Resumo dos resultados</h2>{winner ? <span className="winner-mini">Mais votado: <strong>{winner.name}</strong></span> : null}</div>
               <div className="detail-info-grid">
-                <p><BarChart3 size={17} /><span>Total de votos</span>{result.total_votes ?? 0}</p>
-                <p><BarChart3 size={17} /><span>Votos online (válidos)</span>{result.online_votes ?? 0}</p>
-                <p><BarChart3 size={17} /><span>Votos presenciais</span>{result.physical_votes ?? 0}</p>
-                <p><BarChart3 size={17} /><span>Votos em branco</span>{result.blank_votes ?? 0}</p>
+                <p><span>Total de votos</span>{result.total_votes ?? 0}</p>
+                <p><span>Votos online (válidos)</span>{result.online_votes ?? 0}</p>
+                <p><span>Votos presenciais</span>{result.physical_votes ?? 0}</p>
+                <p><span>Votos em branco</span>{result.blank_votes ?? 0}</p>
               </div>
               <Link className="secondary-button" to={isVoterView ? `/portal-eleitor/resultados?eleicao=${id}` : `/resultados/${id}`}>Consultar apuramento completo</Link>
             </section>
@@ -150,10 +146,10 @@ export default function ElectionDetailsPage() {
             </div>
           </section> : null}
         </div>
-        {/* <aside className="election-side-card professional-side-card">
+        <aside className="election-side-card professional-side-card">
           <h2>Estado da eleição</h2>
-          <p><span>Situação</span><strong>{getElectionStatusLabel(election.status)}</strong></p>
-          {canVote ? <p><span>Eleitor autorizado</span><CheckCircle2 size={16} /> {election.has_voted ? 'Você já votou nesta eleição.' : canVoteNow ? 'Já pode votar.' : 'Votação indisponível neste estado.'}</p> : null}
+          <p><span>Situação</span><strong className={`status-pill ${getElectionStatusClass(election.status)}`}>{getElectionStatusLabel(election.status)}</strong></p>
+          {canVote ? <p><span>Eleitor autorizado</span><CheckCircle2 size={16} /> {election.has_voted ? 'Já votou nesta eleição.' : canVoteNow ? 'Já pode votar.' : 'Votação indisponível neste estado.'}</p> : null}
           {canVoteNow ? <Link className="primary-action-button" to={`/portal-eleitor/votacoes/${id}`}>Ir para o boletim</Link> : null}
           {canEditElection ? <Link className="secondary-button" to={`/eleicoes/${id}/editar`}><Pencil size={16} /> Editar dados</Link> : null}
           {canEdit && !isVoterView && election.status === 'PROGRAMADA' ? <button className="secondary-button" type="button" disabled={saving} onClick={() => updateStatus('EM_VOTACAO')}>Abrir votação</button> : null}
@@ -161,7 +157,7 @@ export default function ElectionDetailsPage() {
           {canEdit && !isVoterView && election.status === 'CONCLUIDA' ? <Link className="secondary-button" to={`/eleicoes/${id}/resultados-presenciais`}>Inserir presenciais</Link> : null}
           {canEdit && !isVoterView && election.status === 'CONCLUIDA' ? <button className="primary-action-button" type="button" disabled={saving} onClick={() => setPublishChoiceOpen(true)}>Publicar resultados</button> : null}
           {['PROGRAMADA', 'EM_VOTACAO', 'CONCLUIDA', 'RESULTADOS_PUBLICADOS'].includes(election.status) ? <Link className="primary-action-button" to={isVoterView ? `/portal-eleitor/resultados?eleicao=${id}` : `/resultados/${id}`}>Consultar resultados</Link> : null}
-        </aside> */}
+        </aside>
       </div>
       {publishChoiceOpen ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">

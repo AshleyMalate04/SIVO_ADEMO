@@ -3,6 +3,7 @@ export const ELECTION_STATUS_LABELS = {
   EM_VOTACAO: 'Em votação',
   CONCLUIDA: 'Concluída',
   RESULTADOS_PUBLICADOS: 'Resultados publicados',
+  SUSPENDED: 'Suspensa',
 }
 
 export const ELECTION_STATUS_CLASS = {
@@ -10,6 +11,7 @@ export const ELECTION_STATUS_CLASS = {
   EM_VOTACAO: 'voting',
   CONCLUIDA: 'completed',
   RESULTADOS_PUBLICADOS: 'published',
+  SUSPENDED: 'suspended',
 }
 
 export const selectableElections = [

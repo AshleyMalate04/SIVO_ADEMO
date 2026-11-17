@@ -1,41 +1,44 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import Loading from "../components/common/Loading";
 import AuthLayout from "../components/layout/AuthLayout";
 import AppLayout from "../components/layout/AppLayout";
-import LoginPage from "../pages/auth/LoginPage";
-import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
-import VerifyCodePage from "../pages/auth/VerifyCodePage";
-import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
-import DashboardPage from "../pages/dashboard/DashboardPage";
-import DelegationsPage from "../pages/delegations/DelegationsPage";
-import DelegationFormPage from "../pages/delegations/DelegationFormPage";
-import OrgansPage from "../pages/organs/OrgansPage";
-import OrganFormPage from "../pages/organs/OrganFormPage";
-import MembersPage from "../pages/members/MembersPage";
-import MemberFormPage from "../pages/members/MemberFormPage";
-import OperationalUsersPage from "../pages/users/OperationalUsersPage";
-import OperationalUserFormPage from "../pages/users/OperationalUserFormPage";
-import ElectionsPage from "../pages/elections/ElectionsPage";
-import ElectionCreatePage from "../pages/elections/ElectionCreatePage";
-import ElectionSelectionPage from "../pages/elections/ElectionSelectionPage";
-import ElectionCreateTeamPage from "../pages/elections/ElectionCreateTeamPage";
-import ElectionDetailsPage from "../pages/elections/ElectionDetailsPage";
-import PhysicalResultsPage from "../pages/elections/PhysicalResultsPage";
-import ElectionTeamPage from "../pages/elections/ElectionTeamPage";
-import ElectionVotersPage from "../pages/elections/ElectionVotersPage";
-import ElectionVoterFormPage from "../pages/elections/ElectionVoterFormPage";
-import ElectionCandidatesPage from "../pages/elections/ElectionCandidatesPage";
-import ElectionCandidateFormPage from "../pages/elections/ElectionCandidateFormPage";
-import MyElectionsPage from "../pages/voting/MyElectionsPage";
-import BallotPage from "../pages/voting/BallotPage";
-import CandidateProfilePage from "../pages/voting/CandidateProfilePage";
-import VoteSuccessPage from "../pages/voting/VoteSuccessPage";
-import ResultsPage from "../pages/results/ResultsPage";
-import ResultDetailsPage from "../pages/results/ResultDetailsPage";
-import AuditPage from "../pages/audit/AuditPage";
-import SettingsPage from "../pages/settings/SettingsPage";
-import UnauthorizedPage from "../pages/errors/UnauthorizedPage";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
+
+const AuditPage = lazy(() => import("../pages/audit/AuditPage"));
+const ForgotPasswordPage = lazy(() => import("../pages/auth/ForgotPasswordPage"));
+const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
+const ResetPasswordPage = lazy(() => import("../pages/auth/ResetPasswordPage"));
+const VerifyCodePage = lazy(() => import("../pages/auth/VerifyCodePage"));
+const DashboardPage = lazy(() => import("../pages/dashboard/DashboardPage"));
+const DelegationFormPage = lazy(() => import("../pages/delegations/DelegationFormPage"));
+const DelegationsPage = lazy(() => import("../pages/delegations/DelegationsPage"));
+const ElectionCandidateFormPage = lazy(() => import("../pages/elections/ElectionCandidateFormPage"));
+const ElectionCandidatesPage = lazy(() => import("../pages/elections/ElectionCandidatesPage"));
+const ElectionCreatePage = lazy(() => import("../pages/elections/ElectionCreatePage"));
+const ElectionCreateTeamPage = lazy(() => import("../pages/elections/ElectionCreateTeamPage"));
+const ElectionDetailsPage = lazy(() => import("../pages/elections/ElectionDetailsPage"));
+const ElectionSelectionPage = lazy(() => import("../pages/elections/ElectionSelectionPage"));
+const ElectionsPage = lazy(() => import("../pages/elections/ElectionsPage"));
+const ElectionTeamPage = lazy(() => import("../pages/elections/ElectionTeamPage"));
+const ElectionVoterFormPage = lazy(() => import("../pages/elections/ElectionVoterFormPage"));
+const ElectionVotersPage = lazy(() => import("../pages/elections/ElectionVotersPage"));
+const PhysicalResultsPage = lazy(() => import("../pages/elections/PhysicalResultsPage"));
+const UnauthorizedPage = lazy(() => import("../pages/errors/UnauthorizedPage"));
+const MemberFormPage = lazy(() => import("../pages/members/MemberFormPage"));
+const MembersPage = lazy(() => import("../pages/members/MembersPage"));
+const OrganFormPage = lazy(() => import("../pages/organs/OrganFormPage"));
+const OrgansPage = lazy(() => import("../pages/organs/OrgansPage"));
+const ResultDetailsPage = lazy(() => import("../pages/results/ResultDetailsPage"));
+const ResultsPage = lazy(() => import("../pages/results/ResultsPage"));
+const SettingsPage = lazy(() => import("../pages/settings/SettingsPage"));
+const OperationalUserFormPage = lazy(() => import("../pages/users/OperationalUserFormPage"));
+const OperationalUsersPage = lazy(() => import("../pages/users/OperationalUsersPage"));
+const BallotPage = lazy(() => import("../pages/voting/BallotPage"));
+const CandidateProfilePage = lazy(() => import("../pages/voting/CandidateProfilePage"));
+const MyElectionsPage = lazy(() => import("../pages/voting/MyElectionsPage"));
+const VoteSuccessPage = lazy(() => import("../pages/voting/VoteSuccessPage"));
 
 const ADMIN = ["ADMIN"];
 const STAFF = ["ADMIN", "COMISSAO", "COMMISSION", "FISCAL"];
@@ -51,6 +54,7 @@ function guarded(element, roles) {
 export default function AppRoutes() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<Loading label="A carregar página..." />}>
       <Routes>
         <Route element={<AuthLayout />}>
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -80,7 +84,6 @@ export default function AppRoutes() {
             <Route path="/comissao-fiscal" element={guarded(<OperationalUsersPage mode="staff" />, ADMIN)} />
             <Route path="/comissao-fiscal/novo" element={guarded(<OperationalUserFormPage />, ADMIN)} />
             <Route path="/comissao-fiscal/:id/editar" element={guarded(<OperationalUserFormPage />, ADMIN)} />
-            {/* <Route path="/utilizadores" element={guarded(<OperationalUsersPage mode="users" />, ADMIN)} /> */}
 
             <Route path="/eleicoes" element={guarded(<ElectionsPage />, STAFF)} />
             <Route path="/eleicoes/nova" element={guarded(<ElectionCreatePage />, COMMISSION)} />
@@ -120,12 +123,14 @@ export default function AppRoutes() {
             <Route path="/auditoria" element={guarded(<AuditPage />, ["ADMIN", "FISCAL"])} />
             <Route path="/auditoria/eleicoes" element={guarded(<ElectionSelectionPage mode="audit" />, ["ADMIN", "FISCAL", "COMISSAO", "COMMISSION"])} />
 
-            <Route path="/configuracoes" element={guarded(<SettingsPage />, EVERYONE)} />
+            <Route path="/perfil" element={guarded(<SettingsPage />, EVERYONE)} />
+            <Route path="/configuracoes" element={<Navigate to="/perfil" replace />} />
           </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

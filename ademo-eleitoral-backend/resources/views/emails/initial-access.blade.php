@@ -15,9 +15,9 @@
     <p style="margin:0;"><strong>Palavra-passe inicial:</strong> {{ $initialPassword }}</p>
   </div>
 
-  {{-- <p style="margin:0 0 18px;font-size:16px;line-height:1.65;color:#263244;">
-    Após entrar, aceda às configurações para alterar a sua palavra-passe.
-  </p> --}}
+  <p style="margin:0 0 18px;font-size:16px;line-height:1.65;color:#263244;">
+    No primeiro acesso, deverá substituir esta palavra-passe inicial por uma palavra-passe pessoal.
+  </p>
 
   <p style="margin:0 0 24px;">
     <a href="{{ $loginUrl }}" style="display:inline-block;background:#b91c1c;color:#ffffff;text-decoration:none;border-radius:6px;padding:12px 18px;font-weight:700;">

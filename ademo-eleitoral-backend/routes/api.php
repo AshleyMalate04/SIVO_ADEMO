@@ -17,9 +17,10 @@ use App\Http\Controllers\Api\ResultController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VotingController;
+use App\Support\ApiResponse;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => \App\Support\ApiResponse::success(['status' => 'ok'], 'API operacional.'));
+Route::get('/health', fn () => ApiResponse::success(['status' => 'ok'], 'API operacional.'));
 
 Route::prefix('auth')->group(function (): void {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
@@ -34,7 +35,7 @@ Route::prefix('auth')->group(function (): void {
     });
 });
 
-Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
+Route::middleware(['auth:sanctum', 'active', 'password.changed'])->group(function (): void {
     Route::middleware('role:ADMIN,COMISSAO,COMMISSION,FISCAL')->group(function (): void {
         Route::get('/provinces', [ProvinceController::class, 'index']);
         Route::get('/provinces/{id}', [ProvinceController::class, 'show']);
@@ -72,6 +73,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
         Route::get('/users/{id}', [UserController::class, 'show']);
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::patch('/users/{id}/status', [UserController::class, 'updateStatus']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
     });
 
     Route::middleware('role:ADMIN,COMISSAO')->group(function (): void {
@@ -98,6 +100,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
         Route::post('/elections/{id}/candidates', [CandidateController::class, 'storeForElection']);
         Route::put('/candidates/{id}', [CandidateController::class, 'update']);
         Route::patch('/candidates/{id}/status', [CandidateController::class, 'updateStatus']);
+        Route::delete('/candidates/{id}', [CandidateController::class, 'destroy']);
 
         Route::post('/elections/{id}/voters', [ElectionVoterController::class, 'storeForElection']);
         Route::patch('/elections/{id}/voters/{memberId}/status', [ElectionVoterController::class, 'updateStatus']);
@@ -115,7 +118,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     Route::middleware('role:ELEITOR,VOTER')->group(function (): void {
         Route::get('/voting/elections', [VotingController::class, 'elections']);
         Route::get('/voting/elections/{id}/ballot', [VotingController::class, 'ballot']);
-        Route::post('/voting/elections/{id}/confirm', [VotingController::class, 'confirm']);
+        Route::post('/voting/elections/{id}/confirm', [VotingController::class, 'confirm'])->middleware('throttle:10,1');
         Route::get('/voting/elections/{id}/receipt', [VotingController::class, 'receipt']);
 
         Route::get('/notifications', [NotificationController::class, 'index']);
@@ -138,6 +141,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     Route::get('/settings', [SettingController::class, 'current']);
     Route::put('/settings', [SettingController::class, 'updateCurrent']);
     Route::put('/settings/email', [SettingController::class, 'updateEmail']);
+    Route::put('/settings/profile', [SettingController::class, 'updateProfile']);
     Route::put('/settings/password', [SettingController::class, 'updatePassword']);
     // Route::get('/elections/{id}/candidates', [CandidateController::class
 });

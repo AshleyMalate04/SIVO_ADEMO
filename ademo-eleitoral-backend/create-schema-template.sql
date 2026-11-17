@@ -466,6 +466,3 @@ CREATE INDEX idx_notifications_read_at ON notifications(read_at);
 -- ============================================================
 -- FIM DA MIGRAÇÃO
 -- ============================================================
-
-
-$2a$12$5FJeb5nTaSQ7Zbw53Ak6V.A46o5MHCytPCxsMhD8jegaQOUg5Lkoe  --12345678

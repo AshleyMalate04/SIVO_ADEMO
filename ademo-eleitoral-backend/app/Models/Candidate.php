@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class Candidate extends Model
 {
@@ -33,7 +34,25 @@ class Candidate extends Model
 
     public function getDocumentUrlAttribute(): ?string
     {
-        return $this->publicFileUrl($this->document_path, 'candidate.documents.show');
+        $path = $this->document_path;
+
+        if (! $this->exists || ! $path) {
+            return null;
+        }
+
+        if (preg_match('~^https?://~i', $path)) {
+            return $path;
+        }
+
+        if (! preg_match('~^candidates/documents/[A-Za-z0-9._-]+$~', $path)) {
+            return null;
+        }
+
+        if (! Storage::disk('local')->exists($path) && ! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        return URL::temporarySignedRoute('candidate.documents.show', now()->addHour(), ['candidate' => $this->getKey()]);
     }
 
     private function publicFileUrl(?string $path, string $routeName): ?string

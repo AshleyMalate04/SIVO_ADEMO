@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import { delegationService } from '../../services/delegationService'
 import { electionService } from '../../services/electionService'
 import { userService } from '../../services/userService'
@@ -67,8 +68,8 @@ export default function ElectionCreateTeamPage({ mode = 'wizard' }) {
           .filter((user) => ['COMISSAO', 'COMMISSION', 'FISCAL'].includes(user.role) && user.status === 'ACTIVE')
           .map(normalizeUser))
 
-        if (!selectedElectionId && programmadas[0]?.id) {
-          setSelectedElectionId(String(programmadas[0].id))
+        if (programmadas[0]?.id) {
+          setSelectedElectionId((current) => current || String(programmadas[0].id))
         }
       })
       .catch((error) => notify.error('Não foi possível carregar a equipa.', error.response?.data?.message || 'Verifique a API.'))
@@ -171,7 +172,7 @@ export default function ElectionCreateTeamPage({ mode = 'wizard' }) {
       <section className="filters-panel team-filters" aria-label="Filtros da equipa">
         <label className="filter-field filter-search">
           <Search size={22} />
-          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar nome, delegação ou email" />
+          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar membros..." />
         </label>
         <label className="filter-field">
           <select value={filters.profile} onChange={(event) => setFilters((current) => ({ ...current, profile: event.target.value }))}>
@@ -186,6 +187,7 @@ export default function ElectionCreateTeamPage({ mode = 'wizard' }) {
             {delegations.map((delegation) => <option key={delegation.id} value={delegation.id}>{delegation.name}</option>)}
           </select>
         </label>
+        <ClearFiltersButton active={Object.values(filters).some(Boolean)} onClick={() => setFilters({ q: '', profile: '', delegation: '' })} />
       </section>
 
       <section className="table-card management-table-card team-table">
@@ -195,7 +197,7 @@ export default function ElectionCreateTeamPage({ mode = 'wizard' }) {
               <th>Seleccionar</th>
               <th>Nome</th>
               <th>Perfil</th>
-              <th>Delegação de Origem</th>
+              <th>Delegação de origem</th>
               <th>Email</th>
             </tr>
           </thead>

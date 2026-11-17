@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import PaginationLayout from '../../components/common/PaginationLayout'
 import RowActions from '../../components/common/RowActions'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import { useAuth } from '../../hooks/useAuth'
 import { userService } from '../../services/userService'
 import { commonStatusClass, normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
@@ -54,7 +55,7 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({ q: '', role: '', status: '' })
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true)
       const records = await userService.list()
@@ -65,11 +66,11 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [mode])
 
   useEffect(() => {
     loadUsers()
-  }, [mode])
+  }, [loadUsers])
 
   const filteredUsers = useMemo(() => {
     const term = normalizeSearchText(filters.q)
@@ -93,7 +94,7 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
         <h1>{pageTitle}</h1>
         <p>
           {isStaffManagement
-            ? 'Controle os membros da comissao e fiscais que tem acesso operacional ao sistema eleitoral.'
+            ? 'Controle os membros da comissão e fiscais com acesso operacional ao Sistema de Votação Eleitoral.'
             : 'Consulte os utilizadores registados no sistema, sem incluir administradores.'}
         </p>
       </header>
@@ -111,10 +112,10 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
           <input
             value={filters.q}
             onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
-            placeholder="Pesquisar por nome, email, telefone ou perfil"
+            placeholder="Pesquisar utilizadores..."
           />
         </label>
-        <label className="filter-field">
+        <label className="filter-field" data-field-kind="role">
           <select value={filters.role} onChange={(event) => setFilters((current) => ({ ...current, role: event.target.value }))}>
             <option value="">Todos os perfis</option>
             <option value="COMISSAO">Comissão</option>
@@ -122,13 +123,14 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
             {!isStaffManagement ? <option value="ELEITOR">Eleitor</option> : null}
           </select>
         </label>
-        <label className="filter-field">
+        <label className="filter-field" data-field-kind="status">
           <select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
             <option value="">Todos os estados</option>
             <option value="ACTIVE">Activo</option>
             <option value="SUSPENDED">Suspendido</option>
           </select>
         </label>
+        <ClearFiltersButton active={Object.values(filters).some(Boolean)} onClick={() => setFilters({ q: '', role: '', status: '' })} />
       </section>
 
       <section className="table-card management-table-card">
@@ -142,22 +144,26 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
                   <tr>
                     <th>Nome</th>
                     <th>Código</th>
-                    <th>Delegação de Origem</th>
+                    <th>Delegação de origem</th>
                     <th>Email</th>
                     <th>Perfil</th>
-                    <th><span className="state-heading">Estado <ArrowDown size={18} /></span></th>
+                    <th>Estado</th>
                     {isStaffManagement ? <th>Acções</th> : null}
                   </tr>
                 </thead>
                 <tbody>
-                  {pageItems.map((user) => (
+                  {pageItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={isStaffManagement ? 7 : 6} className="empty-table-message">Sem membros da comissão ou fiscais para apresentar.</td>
+                    </tr>
+                  ) : pageItems.map((user) => (
                     <tr key={user.id}>
                       <td className="title-cell">{user.name}</td>
                       <td>{user.code}</td>
                       <td>{user.delegation}</td>
                       <td>{user.email}</td>
                       <td>{user.role}</td>
-                      <td><span className={`status-pill ${commonStatusClass(user.rawStatus ?? user.status)}`}><span></span>{user.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(user.rawStatus ?? user.status)}`}>{user.status}</span></td>
                       {isStaffManagement ? (
                         <td>
                           <RowActions
@@ -166,7 +172,7 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
                             details={[
                               ['Nome', user.name],
                               ['Código', user.code],
-                              ['Delegação de Origem', user.delegation],
+                              ['Delegação de origem', user.delegation],
                               ['Email', user.email],
                               ['Contacto', user.contact],
                               ['Perfil', user.role],
@@ -185,7 +191,7 @@ export default function OperationalUsersPage({ mode = 'staff' }) {
                               loadUsers()
                             } : null}
                             onDelete={canManage ? async () => {
-                              await userService.updateStatus(user.id, { status: 'INACTIVE' })
+                              await userService.remove(user.id)
                               notify.success('Utilizador eliminado com sucesso.')
                               loadUsers()
                             } : null}

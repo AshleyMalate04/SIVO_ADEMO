@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { BarChart3, CheckCircle2, Download, Eye, Send, Trophy } from 'lucide-react'
+import { CheckCircle2, Download, Eye, Send } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import { getElectionStatusClass, getElectionStatusLabel } from '../../data/elections'
 import { resultService } from '../../services/resultService'
@@ -34,6 +34,7 @@ export default function ResultsPage() {
   const [selectedId, setSelectedId] = useState(searchParams.get('eleição') || searchParams.get('eleicao') || '')
   const [publishChoiceOpen, setPublishChoiceOpen] = useState(false)
   const resultSectionRef = useRef(null)
+  const initialLoadStarted = useRef(false)
 
   const loadElections = useCallback(async () => {
     const records = await resultService.list()
@@ -77,10 +78,12 @@ export default function ResultsPage() {
   })
 
   useEffect(() => {
+    if (initialLoadStarted.current) return
+    initialLoadStarted.current = true
     loadElections()
       .catch((error) => notify.error('Não foi possível carregar resultados.', error.response?.data?.message || 'Verifique a API.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [loadElections])
 
   useEffect(() => {
     loadResult(selectedId)
@@ -117,11 +120,11 @@ export default function ResultsPage() {
   const selectionRoute = isVoter ? '/portal-eleitor/resultados/eleicoes' : '/resultados/eleicoes'
 
   const handleExport = () => {
-    if (!result?.election) return
+    if (!result?.election || visualRows.length === 0 || totalVotes <= 0) return
     exportCsv(
       `resultados-${result.election.id}`,
       ['Eleição', 'Órgão', 'Cargo', 'Candidato', 'Online', 'Presencial', 'Total'],
-      rows.map((row) => [result.election.title, result.election.organ?.name, result.election.position?.name, row.name, row.online, row.physical, row.total]),
+      visualRows.map((row) => [result.election.title, result.election.organ?.name, result.election.position?.name, row.name, row.online, row.physical, row.total]),
     )
   }
 
@@ -154,7 +157,7 @@ export default function ResultsPage() {
           <p>Consulte as eleições autorizadas e acompanhe os resultados parciais ou finais em tempo real.</p>
         </header>
         {!isVoter ? (
-          <button className="primary-action-button top-create-button" type="button" onClick={handleExport} disabled={!result}>
+          <button className="primary-action-button top-create-button" type="button" onClick={handleExport} disabled={!result?.election || visualRows.length === 0 || totalVotes <= 0} title={totalVotes <= 0 ? 'Não existem dados para exportar' : 'Exportar resultados'}>
             <Download size={18} /> Exportar
           </button>
         ) : null}
@@ -182,7 +185,7 @@ export default function ResultsPage() {
               <p>Órgão: {election.organ}</p>
               <p>Cargo: {election.position} · Delegação: {election.delegation}</p>
             </div>
-            <span className={`status-pill ${getElectionStatusClass(election.status)}`}><span></span>{getElectionStatusLabel(election.status)}</span>
+            <span className={`status-pill ${getElectionStatusClass(election.status)}`}>{getElectionStatusLabel(election.status)}</span>
           </button>
         ))}
       </section>
@@ -190,11 +193,11 @@ export default function ResultsPage() {
       {result ? (
         <div ref={resultSectionRef} className="results-live-section">
           {!isVoter ? <section className="result-stats-grid">
-            <article className="result-stat-card"><div><span>Total votos </span><strong>{result.total_votes}</strong></div><BarChart3 size={22} /></article>
+            <article className="result-stat-card"><div><span>Total de votos</span><strong>{result.total_votes}</strong></div></article>
             
-            <article className="result-stat-card"><div><span>Votos online (válidos)</span><strong>{result.online_votes ?? 0}</strong></div><BarChart3 size={22} /></article>
-            <article className="result-stat-card"><div><span>Votos presenciais</span><strong>{result.physical_votes ?? 0}</strong></div><BarChart3 size={22} /></article>
-            <article className="result-stat-card"><div><span>Votos em branco</span><strong>{result.blank_votes ?? 0}</strong></div><BarChart3 size={22} /></article>
+            <article className="result-stat-card"><div><span>Votos online (válidos)</span><strong>{result.online_votes ?? 0}</strong></div></article>
+            <article className="result-stat-card"><div><span>Votos presenciais</span><strong>{result.physical_votes ?? 0}</strong></div></article>
+            <article className="result-stat-card"><div><span>Votos em branco</span><strong>{result.blank_votes ?? 0}</strong></div></article>
           </section> : null}
 
           {!isVoter && canPublish && selectedElection?.status === 'CONCLUIDA' ? (
@@ -209,14 +212,13 @@ export default function ResultsPage() {
 
           {!isVoter && winner ? (
             <section className="winner-card">
-              <Trophy size={28} />
               <div><span>Candidato mais votado</span><strong>{winner.name}</strong><p>{winner.total} voto(s) no total.</p></div>
               <Link className="secondary-button" to={`/resultados/${selectedId}`}><Eye size={18} /> Consultar detalhes</Link>
             </section>
           ) : null}
 
           <section className="partial-results-card professional-results-card">
-            <header><h2><BarChart3 size={22} /> {isVoter ? 'Resultados parciais' : 'Resultado final'}: {result.election?.position?.name ?? 'Cargo'}</h2></header>
+            <header><h2>{isVoter ? 'Resultados parciais' : 'Resultado final'}: {result.election?.position?.name ?? 'Cargo'}</h2></header>
             <div className="results-bars">
               {visualRows.map((row) => {
                 const percent = totalVotes > 0 ? Math.round((row.total / totalVotes) * 100) : 0
@@ -228,9 +230,7 @@ export default function ResultsPage() {
                         {!isVoter && !row.isBlank ? <small>Online: {row.online} · Presencial: {row.physical}</small> : null}
                         {row.isBlank ? <small>Votos em branco apurados</small> : null}
                       </div>
-                     
                       <b>{row.total} voto(s) · {percent}%</b>
-                      {/* {!isVoter ? <small>Online: {row.online} · Presencial: {row.physical}</small> : null} */}
                     </div>
                     <span className="bar-track"><span className="bar-fill" style={{ width: `${percent}%` }}></span></span>
                   </article>

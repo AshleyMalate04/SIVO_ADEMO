@@ -102,4 +102,9 @@ export const candidateService = {
     const response = await api.patch(`/candidates/${id}/status`, payload)
     return unwrap(response)
   },
+
+  async remove(id) {
+    const response = await api.delete(`/candidates/${id}`)
+    return unwrap(response)
+  },
 }

@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import PaginationLayout from '../../components/common/PaginationLayout'
 import RowActions from '../../components/common/RowActions'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import { useAuth } from '../../hooks/useAuth'
 import { notify } from '../../utils/notify'
 import { canCreateResource, canManageResource, canMutateStatus } from '../../utils/rolePermissions'
 import { delegationService } from '../../services/delegationService'
-import { normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
+import { commonStatusClass, normalizeStatus, searchText as normalizeSearchText } from '../../utils/statusFilters'
 
 const normalizeDelegation = (delegation) => ({
   id: delegation.id,
@@ -64,7 +65,7 @@ export default function DelegationsPage() {
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão de Delegações</h1>
+        <h1>Gestão de delegações</h1>
         <p>Gestão das delegações/provincias da ADEMO.</p>
       </header>
 
@@ -76,7 +77,7 @@ export default function DelegationsPage() {
       <section className="filters-panel" aria-label="Filtros de delegações">
         <label className="filter-field filter-search">
           <Search size={22} />
-          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar delegação" />
+          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar delegações..." />
         </label>
         <label className="filter-field">
           <select value={filters.province} onChange={(event) => setFilters((current) => ({ ...current, province: event.target.value }))}>
@@ -91,6 +92,7 @@ export default function DelegationsPage() {
             <option value="SUSPENDED">Suspendida</option>
           </select>
         </label>
+        <ClearFiltersButton active={Object.values(filters).some(Boolean)} onClick={() => setFilters({ q: '', province: '', status: '' })} />
       </section>
 
       <section className="table-card management-table-card">
@@ -103,7 +105,7 @@ export default function DelegationsPage() {
                   <th>Nome</th>
                   <th>Provincia</th>
                   <th>Distrito</th>
-                  <th><span className="state-heading">Estado <ArrowDown size={18} /></span></th>
+                  <th>Estado</th>
                   <th>Acções</th>
                 </tr>
               </thead>
@@ -117,7 +119,7 @@ export default function DelegationsPage() {
                     <td className="title-cell">{delegation.name}</td>
                     <td>{delegation.province}</td>
                     <td>{delegation.district}</td>
-                    <td><span className="status-pill"><span></span>{delegation.status}</span></td>
+                    <td><span className={`status-pill ${commonStatusClass(delegation.rawStatus)}`}>{delegation.status}</span></td>
                     <td>
                       <RowActions
                         canManage={canManage}

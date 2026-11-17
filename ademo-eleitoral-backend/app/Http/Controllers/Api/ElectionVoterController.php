@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\ParticipacaoActualizada;
 use App\Http\Requests\Api\ElectionVoterRequest;
 use App\Http\Requests\Api\ElectionVoterStatusRequest;
 use App\Models\Election;
@@ -59,13 +60,17 @@ class ElectionVoterController extends CrudController
     public function destroyByMember(\Illuminate\Http\Request $request, int|string $id, int|string $memberId): JsonResponse
     {
         $voter = ElectionVoter::where('election_id', $id)->where('member_id', $memberId)->firstOrFail();
-        $voter->update(['status' => 'REMOVED']);
         AuditService::record($request, 'ELEITOR_REMOVIDO', 'ElectionVoter', $voter->id, [
             'election_id' => (int) $id,
             'member_id' => (int) $memberId,
+            'status' => $voter->status,
+            'has_voted' => (bool) $voter->has_voted,
+            'snapshot' => $voter->attributesToArray(),
         ]);
+        $voter->delete();
+        event(new ParticipacaoActualizada(Election::findOrFail($id)));
 
-        return ApiResponse::success($voter, 'Eleitor removido com sucesso.');
+        return ApiResponse::success(null, 'Eleitor eliminado com sucesso.');
     }
 
     public function updateStatus(ElectionVoterStatusRequest $request, int|string $id, int|string $memberId): JsonResponse
@@ -78,6 +83,7 @@ class ElectionVoterController extends CrudController
             'member_id' => (int) $memberId,
             'status' => $voter->status,
         ]);
+        event(new ParticipacaoActualizada(Election::findOrFail($id)));
 
         return ApiResponse::success($voter, 'Estado do eleitor actualizado com sucesso.');
     }

@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle } from "lucide-react";
+import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 export default function VoteConfirmModal({
@@ -16,16 +16,12 @@ export default function VoteConfirmModal({
           type="button"
           aria-label="Fechar"
         >
-          <XCircle size={24} />
+          <X size={20} />
         </button>
 
         <div className="modal-content">
-          <div className="modal-icon success">
-            <CheckCircle2 size={48} />
-          </div>
-
-          <h2>Confirme sua Votação</h2>
-          <p>Tem certeza que deseja votar em:</p>
+          <h2>Confirme o seu voto</h2>
+          <p>Vai votar em:</p>
 
           <div className="modal-candidate-info">
             <h3>{candidate.name}</h3>
@@ -33,7 +29,7 @@ export default function VoteConfirmModal({
           </div>
 
           <p className="modal-warning">
-            Após confirmar, não será possível alterar sua escolha.
+            Após confirmar, não será possível alterar a sua escolha.
           </p>
 
           <div className="modal-actions">
@@ -51,7 +47,7 @@ export default function VoteConfirmModal({
               type="button"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Confirmando..." : "Confirmar Voto"}
+              {isSubmitting ? "A confirmar..." : "Confirmar voto"}
             </button>
           </div>
         </div>

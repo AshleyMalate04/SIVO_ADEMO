@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import Loading from '../../components/common/Loading'
 import PaginationLayout from '../../components/common/PaginationLayout'
+import ClearFiltersButton from '../../components/common/ClearFiltersButton'
 import RowActions from '../../components/common/RowActions'
 import { candidateService } from '../../services/candidateService'
 import { electionService } from '../../services/electionService'
@@ -41,7 +42,7 @@ export default function ElectionCandidatesPage() {
   const [elections, setElections] = useState([])
   const [candidates, setCandidates] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({ q: '', election: '', position: '', delegation: '', status: '' })
+  const [filters, setFilters] = useState({ q: '', election: '', status: '' })
 
   // const loadCandidates = async () => {
   //   try {
@@ -94,26 +95,27 @@ export default function ElectionCandidatesPage() {
       const matchesTerm = !term || [candidate.name, candidate.organ, candidate.position, candidate.election, candidate.delegation]
         .some((value) => normalizeSearchText(value).includes(term))
       const matchesElection = !filters.election || String(candidate.electionId) === filters.election
-      const matchesPosition = !filters.position || candidate.position === filters.position
-      const matchesDelegation = !filters.delegation || String(candidate.delegationId) === String(filters.delegation)
       const matchesStatus = !filters.status || normalizeStatus(candidate.rawStatus) === normalizeStatus(filters.status)
-      return matchesTerm && matchesElection && matchesPosition && matchesDelegation && matchesStatus
+      return matchesTerm && matchesElection && matchesStatus
     })
   }, [candidates, filters])
 
-  const positions = [...new Set(candidates.map((candidate) => candidate.position).filter(Boolean))]
-  const delegations = [...new Map(candidates.filter((candidate) => candidate.delegationId).map((candidate) => [candidate.delegationId, candidate.delegation])).entries()]
-
   const updateCandidateStatus = async (candidate, status) => {
     await candidateService.updateStatus(candidate.id, { status })
-    notify.success(status === 'REJECTED' ? 'Candidato eliminado com sucesso.' : (status === 'SUSPENDED' ? 'Candidato suspendido com sucesso.' : 'Candidato activado com sucesso.'))
+    notify.success(status === 'SUSPENDED' ? 'Candidato suspendido com sucesso.' : 'Candidato activado com sucesso.')
+    loadCandidates()
+  }
+
+  const deleteCandidate = async (candidate) => {
+    await candidateService.remove(candidate.id)
+    notify.success('Candidato eliminado com sucesso.')
     loadCandidates()
   }
 
   return (
     <section className="management-page">
       <header className="management-header">
-        <h1>Gestão do Candidato</h1>
+        <h1>Gestão do candidato</h1>
         <p>Consulte e registe candidatos associados as eleições, órgãos e cargos disponíveis.</p>
       </header>
 
@@ -127,24 +129,12 @@ export default function ElectionCandidatesPage() {
       <section className="filters-panel" aria-label="Filtros de candidatos">
         <label className="filter-field filter-search">
           <Search size={22} />
-          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar candidato, órgão" />
+          <input value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} placeholder="Pesquisar candidatos..." />
         </label>
         <label className="filter-field">
           <select value={filters.election} onChange={(event) => setFilters((current) => ({ ...current, election: event.target.value }))}>
             <option value="">Todas as eleições</option>
             {elections.map((election) => <option key={election.id} value={election.id}>{election.title}</option>)}
-          </select>
-        </label>
-        <label className="filter-field">
-          <select value={filters.position} onChange={(event) => setFilters((current) => ({ ...current, position: event.target.value }))}>
-            <option value="">Todos os cargos</option>
-            {positions.map((position) => <option key={position}>{position}</option>)}
-          </select>
-        </label>
-        <label className="filter-field">
-          <select value={filters.delegation} onChange={(event) => setFilters((current) => ({ ...current, delegation: event.target.value }))}>
-            <option value="">Todas as delegações</option>
-            {delegations.map(([id, delegation]) => <option key={id} value={id}>{delegation}</option>)}
           </select>
         </label>
         <label className="filter-field">
@@ -155,6 +145,7 @@ export default function ElectionCandidatesPage() {
             <option value="REJECTED">Rejeitado</option>
           </select>
         </label>
+        <ClearFiltersButton active={Object.values(filters).some(Boolean)} onClick={() => setFilters({ q: '', election: '', status: '' })} />
       </section>
 
       <section className="table-card management-table-card candidates-table">
@@ -167,11 +158,11 @@ export default function ElectionCandidatesPage() {
                 <thead>
                   <tr>
                     <th>Nome</th>
-                    <th>Delegação de Origem</th>
+                    <th>Delegação de origem</th>
                     <th>Órgão</th>
                     <th>Cargo</th>
                     <th>Eleição</th>
-                    <th><span className="state-heading">Estado <ArrowDown size={18} /></span></th>
+                    <th>Estado</th>
                     <th>Acções</th>
                   </tr>
                 </thead>
@@ -187,7 +178,7 @@ export default function ElectionCandidatesPage() {
                       <td>{candidate.organ}</td>
                       <td>{candidate.position}</td>
                       <td>{candidate.election}</td>
-                      <td><span className={`status-pill ${commonStatusClass(candidate.rawStatus ?? candidate.status)}`}><span></span>{candidate.status}</span></td>
+                      <td><span className={`status-pill ${commonStatusClass(candidate.rawStatus ?? candidate.status)}`}>{candidate.status}</span></td>
                       <td>
                         <RowActions
                           canManage={canManage}
@@ -195,7 +186,7 @@ export default function ElectionCandidatesPage() {
                           isInactive={candidate.rawStatus === 'SUSPENDED'}
                           details={[
                             ['Nome', candidate.name],
-                            ['Delegação de Origem', candidate.delegation],
+                            ['Delegação de origem', candidate.delegation],
                             ['Órgão', candidate.organ],
                             ['Cargo', candidate.position],
                             ['Eleição', candidate.election],
@@ -207,7 +198,7 @@ export default function ElectionCandidatesPage() {
                           onView={() => navigate(`/candidatos/${candidate.id}/detalhes`)}
                           onInactivate={canInactivate ? () => updateCandidateStatus(candidate, 'SUSPENDED') : null}
                           onActivate={canInactivate ? () => updateCandidateStatus(candidate, 'APPROVED') : null}
-                          onDelete={canManage ? () => updateCandidateStatus(candidate, 'REJECTED') : null}
+                          onDelete={canManage ? () => deleteCandidate(candidate) : null}
                         />
                       </td>
                     </tr>

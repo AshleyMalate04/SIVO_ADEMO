@@ -166,6 +166,8 @@ class CandidateController extends CrudController
     private function prepareCandidateFiles($request, array $data, ?Model $record = null): array
     {
         unset($data['photo_file'], $data['document_file']);
+        // A path supplied by the client must never select another candidate's document.
+        unset($data['document_path']);
 
         if ($request->hasFile('photo_file')) {
             $data['photo_path'] = $request->file('photo_file')->store('candidates/photos', 'public');
@@ -174,7 +176,7 @@ class CandidateController extends CrudController
         }
 
         if ($request->hasFile('document_file')) {
-            $data['document_path'] = $request->file('document_file')->store('candidates/documents', 'public');
+            $data['document_path'] = $request->file('document_file')->store('candidates/documents', 'local');
         } elseif (! array_key_exists('document_path', $data) && $record) {
             $data['document_path'] = $record->document_path;
         }
